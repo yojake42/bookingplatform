@@ -107,7 +107,7 @@ export function DevCheckoutPage() {
             </label>
           </div>
           {data && data.status !== 'PENDING' && <p className="mt-4 rounded-xl bg-ink-50 p-3 text-sm text-ink-600">This checkout is {data.status.toLowerCase()}.</p>}
-          {error && <p className="mt-4 rounded-xl bg-brand-50 p-3 text-sm text-brand-800">{error}</p>}
+          {error && <p className="mt-4 rounded-xl bg-danger-50 p-3 text-sm text-danger-800">{error}</p>}
           <Button size="lg" className="mt-6 w-full" icon={<Lock className="size-4" />} loading={paying} disabled={!data || data.status !== 'PENDING'} onClick={() => void pay()}>
             {data ? `Pay ${money(data.amount, data.currency, { exact: true })}` : 'Pay'}
           </Button>

@@ -55,7 +55,7 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
     <Modal
       open={open}
       onClose={onClose}
-      title="Filters"
+      title="Refine the collection"
       size="lg"
       footer={
         <div className="flex items-center justify-between">
@@ -64,6 +64,7 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
           </button>
           <Button
             size="lg"
+            variant="brand"
             loading={preview.isFetching && !preview.data}
             onClick={() => {
               onApply(draft);
@@ -76,11 +77,11 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
       }
     >
       <section className="pb-8">
-        <h3 className="text-xl font-semibold">Price range</h3>
+        <h3 className="display text-2xl">Price range</h3>
         <p className="mt-1 text-sm text-ink-500">Nightly prices before fees</p>
         <div className="relative mt-8 h-6">
           <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-ink-200" />
-          <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-ink-900" style={{ left: `${percent(low)}%`, right: `${100 - percent(high)}%` }} />
+          <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-pine-700" style={{ left: `${percent(low)}%`, right: `${100 - percent(high)}%` }} />
           {[
             { value: low, onChange: (value: number) => setPrice(Math.min(value, high - 10), high), label: 'Minimum price' },
             { value: high, onChange: (value: number) => setPrice(low, Math.max(value, low + 10)), label: 'Maximum price' },
@@ -106,7 +107,7 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
       </section>
 
       <section className="border-t border-ink-100 py-8">
-        <h3 className="text-xl font-semibold">Rooms and beds</h3>
+        <h3 className="display text-2xl">Rooms and beds</h3>
         <div className="mt-2 divide-y divide-ink-100">
           <Counter label="Bedrooms" value={draft.bedrooms} zeroLabel="Any" max={12} onChange={(bedrooms) => setDraft({ ...draft, bedrooms })} />
           <Counter label="Beds" value={draft.beds} zeroLabel="Any" max={16} onChange={(beds) => setDraft({ ...draft, beds })} />
@@ -115,7 +116,7 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
       </section>
 
       <section className="border-t border-ink-100 py-8">
-        <h3 className="text-xl font-semibold">Property type</h3>
+        <h3 className="display text-2xl">Property type</h3>
         <div className="mt-4 flex flex-wrap gap-2">
           {propertyTypes.map((type) => (
             <Chip key={type} active={draft.types.includes(type)} onClick={() => setDraft({ ...draft, types: toggle(draft.types, type) })}>
@@ -126,7 +127,7 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
       </section>
 
       <section className="border-t border-ink-100 pt-8">
-        <h3 className="text-xl font-semibold">Amenities</h3>
+        <h3 className="display text-2xl">Amenities</h3>
         <div className="mt-4 flex flex-wrap gap-2">
           {amenityKeys.map((key) => {
             const amenity = amenityByKey.get(key)!;
@@ -139,7 +140,7 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
           })}
         </div>
         <button type="button" className="mt-5 text-[15px] font-semibold underline underline-offset-4" onClick={() => setShowAllAmenities((value) => !value)}>
-          {showAllAmenities ? 'Show fewer' : 'Show all amenities'}
+          {showAllAmenities ? 'Show fewer' : 'Show every amenity'}
         </button>
       </section>
     </Modal>
@@ -148,7 +149,7 @@ export function FiltersModal({ open, onClose, state, priceRange, onApply }: {
 
 function PriceBox({ label, value, onChange, suffix }: { label: string; value: number; onChange: (value: number) => void; suffix?: string }) {
   return (
-    <label className="flex-1 rounded-2xl border border-ink-300 px-4 py-2 focus-within:border-ink-900 focus-within:ring-1 focus-within:ring-ink-900">
+    <label className="flex-1 rounded-lg border border-ink-300 bg-white px-4 py-2 focus-within:border-pine-700 focus-within:ring-1 focus-within:ring-pine-700">
       <span className="block text-xs text-ink-500">{label}</span>
       <span className="flex items-center">
         <span className="text-[15px]">$</span>
@@ -172,8 +173,8 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition active:scale-95',
-        active ? 'border-ink-900 bg-ink-900 text-white' : 'border-ink-200 bg-white text-ink-800 hover:border-ink-900',
+        'inline-flex items-center gap-2 rounded-md border px-3.5 py-2 text-[13px] font-semibold transition active:translate-y-px',
+        active ? 'border-pine-700 bg-pine-700 text-paper' : 'border-ink-300 bg-white text-ink-800 hover:border-pine-700',
       )}
     >
       {children}

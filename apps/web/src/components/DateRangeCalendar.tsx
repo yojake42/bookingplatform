@@ -46,7 +46,7 @@ export function DateRangeCalendar({ checkIn, checkOut, onChange, unavailable = [
           aria-label="Previous month"
           disabled={viewMonth <= firstMonth}
           onClick={() => setViewMonth(addMonthsIso(viewMonth, -1))}
-          className="absolute top-0 left-0 flex size-8 items-center justify-center rounded-full transition hover:bg-ink-100 disabled:opacity-25"
+          className="absolute top-0 left-0 flex size-8 items-center justify-center rounded-md border border-ink-300 bg-white transition hover:border-pine-700 disabled:opacity-25"
         >
           <ChevronLeft className="size-4" />
         </button>
@@ -55,15 +55,15 @@ export function DateRangeCalendar({ checkIn, checkOut, onChange, unavailable = [
           aria-label="Next month"
           disabled={viewMonth >= lastMonth}
           onClick={() => setViewMonth(addMonthsIso(viewMonth, 1))}
-          className="absolute top-0 right-0 flex size-8 items-center justify-center rounded-full transition hover:bg-ink-100 disabled:opacity-25"
+          className="absolute top-0 right-0 flex size-8 items-center justify-center rounded-md border border-ink-300 bg-white transition hover:border-pine-700 disabled:opacity-25"
         >
           <ChevronRight className="size-4" />
         </button>
 
         {visible.map((month) => (
           <div key={month} className="min-w-0 flex-1">
-            <div className="mb-4 flex h-8 items-center justify-center text-[15px] font-semibold">{format(parseISO(month), 'MMMM yyyy')}</div>
-            <div className="grid grid-cols-7 text-center text-xs font-medium text-ink-500">
+            <div className="display mb-4 flex h-8 items-center justify-center text-xl">{format(parseISO(month), 'MMMM')}<span className="ml-2 font-light text-ink-400">{format(parseISO(month), 'yyyy')}</span></div>
+            <div className="grid grid-cols-7 text-center text-[10px] font-bold tracking-[0.14em] text-ink-400 uppercase">
               {weekdays.map((day) => (
                 <div key={day} className="pb-2">
                   {day}
@@ -85,11 +85,11 @@ export function DateRangeCalendar({ checkIn, checkOut, onChange, unavailable = [
                     key={iso}
                     className={clsx(
                       'relative flex h-11 items-center justify-center',
-                      band && 'bg-ink-100',
-                      isStart && rangeEnd && 'rounded-l-full',
-                      isEnd && checkIn && 'rounded-r-full',
-                      inRange && column === 0 && 'rounded-l-xl',
-                      inRange && column === 6 && 'rounded-r-xl',
+                      band && 'bg-pine-50',
+                      isStart && rangeEnd && 'rounded-l-md',
+                      isEnd && checkIn && 'rounded-r-md',
+                      inRange && column === 0 && 'rounded-l-md',
+                      inRange && column === 6 && 'rounded-r-md',
                     )}
                   >
                     <button
@@ -102,17 +102,17 @@ export function DateRangeCalendar({ checkIn, checkOut, onChange, unavailable = [
                         if (next) onChange(next);
                       }}
                       className={clsx(
-                        'relative flex size-11 items-center justify-center rounded-full text-sm font-medium transition-colors',
+                        'relative flex size-11 items-center justify-center rounded-md text-sm font-semibold tabular-nums transition-colors',
                         isStart || isEnd
-                          ? 'bg-ink-900 text-white'
+                          ? 'bg-pine-700 text-paper'
                           : selectable
-                            ? 'text-ink-900 hover:ring-2 hover:ring-ink-900 hover:ring-inset'
+                            ? 'text-ink-900 hover:bg-white hover:ring-1 hover:ring-pine-700'
                             : 'cursor-not-allowed text-ink-300',
                         !selectable && state.blocked && !state.past && 'line-through decoration-ink-300',
                       )}
                     >
                       {Number(iso.slice(8))}
-                      {iso === today && !isStart && !isEnd && <span className="absolute bottom-1.5 size-1 rounded-full bg-brand-600" />}
+                      {iso === today && !isStart && !isEnd && <span className="absolute bottom-1.5 h-0.5 w-3 rounded-full bg-brass" />}
                     </button>
                     {choosingCheckOut && hovered === iso && state.hint && !state.canCheckOut && (
                       <span className="pointer-events-none absolute -top-7 z-10 rounded-md bg-ink-900 px-2 py-1 text-[11px] font-medium whitespace-nowrap text-white shadow-lg">

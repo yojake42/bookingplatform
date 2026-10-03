@@ -92,7 +92,7 @@ function Stat({ icon, label, value, detail, meter }: { icon: React.ReactNode; la
         <span className="flex size-8 items-center justify-center rounded-lg bg-ink-100 text-ink-700">{icon}</span>
         {label}
       </div>
-      <div className="mt-4 text-3xl font-bold tracking-tight tabular-nums">{value}</div>
+      <div className="display mt-4 text-[40px] leading-none tabular-nums">{value}</div>
       {meter !== undefined && (
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-100">
           <div className="h-full rounded-full bg-ink-900 transition-all duration-700" style={{ width: `${Math.min(100, meter * 100)}%` }} />

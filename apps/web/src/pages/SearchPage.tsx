@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Building, Castle, Home, Hotel, LayoutGrid, List, Map as MapIcon, MountainSnow, SearchX, SlidersHorizontal, Tent, TreePine, Warehouse } from 'lucide-react';
+import { ArrowDownUp, List, Map as MapIcon, SearchX, SlidersHorizontal } from 'lucide-react';
 import { api } from '../lib/api';
 import { dateRangeLabel, plural } from '../lib/format';
 import { useDocumentTitle } from '../lib/hooks';
@@ -15,24 +15,25 @@ import { ListingCard, ListingCardSkeleton } from '../components/ListingCard';
 import { SearchMap } from '../components/maps';
 import { Button, EmptyState } from '../components/ui';
 
-const categories = [
-  { label: 'All homes', type: null, icon: LayoutGrid },
-  { label: 'Houses', type: 'House', icon: Home },
-  { label: 'Cabins', type: 'Cabin', icon: TreePine },
-  { label: 'Villas', type: 'Villa', icon: Castle },
-  { label: 'Apartments', type: 'Apartment', icon: Building },
-  { label: 'Cottages', type: 'Cottage', icon: Tent },
-  { label: 'Chalets', type: 'Chalet', icon: MountainSnow },
-  { label: 'Lofts', type: 'Loft', icon: Warehouse },
-  { label: 'Condos', type: 'Condo', icon: Hotel },
+/** Property types shown as a typographic index rather than an icon strip. */
+const typeIndex: { label: string; type: string | null }[] = [
+  { label: 'Everything', type: null },
+  { label: 'Houses', type: 'House' },
+  { label: 'Cabins', type: 'Cabin' },
+  { label: 'Villas', type: 'Villa' },
+  { label: 'Cottages', type: 'Cottage' },
+  { label: 'Chalets', type: 'Chalet' },
+  { label: 'Apartments', type: 'Apartment' },
+  { label: 'Lofts', type: 'Loft' },
+  { label: 'Condos', type: 'Condo' },
 ];
 
 const sortOptions = [
-  { value: 'recommended', label: 'Recommended' },
-  { value: 'price_asc', label: 'Price: low to high' },
-  { value: 'price_desc', label: 'Price: high to low' },
-  { value: 'rating', label: 'Top rated' },
-  { value: 'newest', label: 'Newest' },
+  { value: 'recommended', label: 'Our picks first' },
+  { value: 'price_asc', label: 'Price, lowest first' },
+  { value: 'price_desc', label: 'Price, highest first' },
+  { value: 'rating', label: 'Best rated' },
+  { value: 'newest', label: 'Newest to the collection' },
 ];
 
 const mapAreaLabel = 'Map area';
@@ -42,9 +43,9 @@ export function SearchPage() {
   const state = useMemo(() => parseSearch(params), [params]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
+  const [mobileView, setMobileView] = useState<'list' | 'map'>(params.get('view') === 'map' ? 'map' : 'list');
   const [searchAsMove, setSearchAsMove] = useState(false);
-  useDocumentTitle(state.place || state.q || 'Find your stay');
+  useDocumentTitle(state.place || state.q || 'The collection');
 
   const update = (patch: Partial<SearchState>) => setParams(serializeSearch({ ...state, ...patch }));
 
@@ -65,117 +66,110 @@ export function SearchPage() {
   const onSearch = (value: SearchSubmit) => update({ ...value });
   const onSearchArea = (bounds: Bounds) => update({ bounds, place: mapAreaLabel, q: '' });
 
-  const heading = (() => {
-    const where = isMapArea ? 'in this map area' : state.place ? `in ${state.place.split(',')[0]}` : state.q ? `matching “${state.q}”` : '';
-    const count = search.data ? plural(search.data.total, 'home') : 'Homes';
-    return `${count} ${where}`.trim();
-  })();
+  const where = isMapArea ? 'within the map area' : state.place ? `in ${state.place.split(',')[0]}` : state.q ? `matching “${state.q}”` : 'across the collection';
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PublicHeader
-        wide
-        center={<SearchBar initial={state} onSearch={onSearch} />}
-      />
+      <PublicHeader wide center={<SearchBar initial={state} onSearch={onSearch} />} />
 
-      <div className="sticky top-20 z-20 border-b border-ink-100 bg-white">
+      <div className="sticky top-[72px] z-20 border-b border-ink-200 bg-paper/95 backdrop-blur-md">
         <div className="flex items-center gap-4 px-5 md:px-10">
-          <div className="scrollbar-none flex min-w-0 flex-1 gap-7 overflow-x-auto pt-3">
-            {categories.map((category) => {
-              const active = category.type === activeType || (!category.type && !activeType);
+          <nav className="scrollbar-none flex min-w-0 flex-1 items-center gap-1 overflow-x-auto py-3" aria-label="Property type">
+            {typeIndex.map((entry, index) => {
+              const active = entry.type === activeType || (!entry.type && !activeType);
               return (
-                <button
-                  key={category.label}
-                  type="button"
-                  onClick={() => update({ types: category.type ? [category.type] : [] })}
-                  className={clsx(
-                    'group flex shrink-0 flex-col items-center gap-1.5 border-b-2 pb-3 text-xs font-semibold transition',
-                    active ? 'border-ink-900 text-ink-900' : 'border-transparent text-ink-500 hover:border-ink-200 hover:text-ink-900',
-                  )}
-                >
-                  <category.icon className={clsx('size-6 transition', active ? 'stroke-[1.75]' : 'stroke-[1.5] group-hover:scale-105')} />
-                  {category.label}
-                </button>
+                <span key={entry.label} className="flex shrink-0 items-center">
+                  {index > 0 && <span className="mx-2 size-1 rotate-45 bg-ink-300" />}
+                  <button
+                    type="button"
+                    onClick={() => update({ types: entry.type ? [entry.type] : [] })}
+                    className={clsx(
+                      'display rounded-md px-2 py-1 text-[17px] transition',
+                      active ? 'bg-pine-700 text-paper italic' : 'text-ink-600 hover:text-pine-700',
+                    )}
+                  >
+                    {entry.label}
+                  </button>
+                </span>
               );
             })}
-          </div>
+          </nav>
           <div className="flex shrink-0 items-center gap-2 py-3">
-            <select
-              aria-label="Sort"
-              value={state.sort}
-              onChange={(event) => update({ sort: event.target.value })}
-              className="hidden h-12 cursor-pointer rounded-xl border border-ink-200 bg-white px-3 text-sm font-semibold transition outline-none hover:border-ink-900 sm:block"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <label className="relative hidden items-center sm:flex">
+              <ArrowDownUp className="pointer-events-none absolute left-3 size-3.5 text-ink-500" />
+              <select
+                aria-label="Sort"
+                value={state.sort}
+                onChange={(event) => update({ sort: event.target.value })}
+                className="h-10 cursor-pointer appearance-none rounded-lg border border-ink-300 bg-white pr-4 pl-8 text-[13px] font-bold transition outline-none hover:border-ink-900"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
               className={clsx(
-                'relative flex h-12 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition hover:border-ink-900',
-                filterCount ? 'border-ink-900 bg-ink-50' : 'border-ink-200',
+                'flex h-10 items-center gap-2 rounded-lg border px-3.5 text-[13px] font-bold transition',
+                filterCount ? 'border-pine-700 bg-pine-50 text-pine-800' : 'border-ink-300 bg-white hover:border-ink-900',
               )}
             >
               <SlidersHorizontal className="size-4" />
-              <span className="hidden sm:inline">Filters</span>
-              {filterCount > 0 && (
-                <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-ink-900 text-[11px] text-white">{filterCount}</span>
-              )}
+              <span className="hidden sm:inline">Refine</span>
+              {filterCount > 0 && <span className="rounded-sm bg-pine-700 px-1.5 text-[11px] text-paper">{filterCount}</span>}
             </button>
           </div>
         </div>
       </div>
 
       <div className="flex flex-1">
-        <section className={clsx('min-w-0 flex-1 px-5 pt-6 pb-24 md:px-10 lg:max-w-[58%] lg:flex-none lg:basis-[58%]', mobileView === 'map' && 'hidden lg:block')}>
-          <div className="mb-6 flex items-baseline justify-between gap-4">
+        <section className={clsx('min-w-0 flex-1 px-5 pt-8 pb-28 md:px-10 lg:max-w-[58%] lg:flex-none lg:basis-[58%]', mobileView === 'map' && 'hidden lg:block')}>
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="text-lg font-semibold">{heading}</h1>
-              {state.checkIn && state.checkOut && (
-                <p className="text-sm text-ink-500">
-                  {dateRangeLabel(state.checkIn, state.checkOut)}
-                  {state.guests ? ` · ${plural(state.guests, 'guest')}` : ''} · prices include cleaning fees
-                </p>
-              )}
+              <p className="eyebrow">{state.checkIn && state.checkOut ? `${dateRangeLabel(state.checkIn, state.checkOut)}${state.guests ? ` · ${plural(state.guests, 'guest')}` : ''}` : 'Any dates'}</p>
+              <h1 className="display mt-1 text-[34px] leading-tight">
+                {search.data ? plural(search.data.total, 'home') : 'Homes'} <em className="font-light text-ink-500">{where}</em>
+              </h1>
+              {state.checkIn && state.checkOut && <p className="mt-1 text-[13px] text-ink-500">Prices shown are the total for your dates, cleaning included.</p>}
             </div>
             {(isMapArea || state.place || state.q || filterCount > 0) && (
-              <button type="button" className="shrink-0 text-sm font-semibold underline underline-offset-4" onClick={() => setParams(serializeSearch({ checkIn: state.checkIn, checkOut: state.checkOut, guests: state.guests }))}>
-                Reset search
+              <button type="button" className="shrink-0 text-[13px] font-bold underline underline-offset-4 hover:text-pine-700" onClick={() => setParams(serializeSearch({ checkIn: state.checkIn, checkOut: state.checkOut, guests: state.guests }))}>
+                Start over
               </button>
             )}
           </div>
 
           {search.isPending ? (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-7 gap-y-12 sm:grid-cols-2 2xl:grid-cols-3">
               {Array.from({ length: 6 }, (_, index) => (
                 <ListingCardSkeleton key={index} />
               ))}
             </div>
           ) : listings.length ? (
-            <div className={clsx('grid grid-cols-1 gap-x-6 gap-y-10 transition-opacity sm:grid-cols-2 xl:grid-cols-3', search.isFetching && 'opacity-60')}>
+            <div className={clsx('grid grid-cols-1 gap-x-7 gap-y-12 transition-opacity sm:grid-cols-2 2xl:grid-cols-3', search.isFetching && 'opacity-60')}>
               {listings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} linkSearch={linkSearch} highlighted={hoveredId === listing.id} onHover={setHoveredId} />
               ))}
             </div>
           ) : (
             <EmptyState
-              icon={<SearchX className="size-6" />}
-              title="No exact matches"
-              description="Try changing or removing some of your filters, adjusting your dates, or zooming out on the map."
+              icon={<SearchX className="size-5" />}
+              title="Nothing quite fits"
+              description="Try different dates, fewer filters, or zoom out on the map to see more of the collection."
               action={
                 <Button variant="secondary" onClick={() => setParams(serializeSearch({}))}>
-                  Clear all filters
+                  Show every home
                 </Button>
               }
             />
           )}
         </section>
 
-        <aside className={clsx('sticky top-[166px] h-[calc(100dvh-166px)] flex-1', mobileView === 'map' ? 'block' : 'hidden lg:block')}>
+        <aside className={clsx('sticky top-[137px] h-[calc(100dvh-137px)] flex-1 border-l border-ink-200', mobileView === 'map' ? 'block' : 'hidden lg:block')}>
           <SearchMap
             listings={listings}
             hoveredId={hoveredId}
@@ -190,21 +184,21 @@ export function SearchPage() {
         </aside>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
-        className="fixed bottom-8 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink-900 px-5 py-3.5 text-sm font-semibold text-white shadow-float transition hover:scale-105 active:scale-95 lg:hidden"
-      >
-        {mobileView === 'list' ? (
-          <>
-            Show map <MapIcon className="size-4" />
-          </>
-        ) : (
-          <>
-            Show list <List className="size-4" />
-          </>
-        )}
-      </button>
+      <div className="fixed inset-x-0 bottom-6 z-30 flex justify-center lg:hidden">
+        <div className="flex rounded-lg bg-pine-900 p-1 shadow-float">
+          {(['list', 'map'] as const).map((view) => (
+            <button
+              key={view}
+              type="button"
+              onClick={() => setMobileView(view)}
+              className={clsx('flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-bold transition', mobileView === view ? 'bg-paper text-pine-900' : 'text-paper/70')}
+            >
+              {view === 'list' ? <List className="size-4" /> : <MapIcon className="size-4" />}
+              {view === 'list' ? 'List' : 'Map'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <FiltersModal
         open={filtersOpen}

@@ -88,8 +88,8 @@ function passwordStrength(password: string) {
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
   if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) score += 1;
   const levels = [
-    { label: 'Too short', color: 'bg-brand-500' },
-    { label: 'Weak', color: 'bg-brand-500' },
+    { label: 'Too short', color: 'bg-danger-500' },
+    { label: 'Weak', color: 'bg-danger-500' },
     { label: 'Fair', color: 'bg-amber-500' },
     { label: 'Good', color: 'bg-emerald-500' },
     { label: 'Strong', color: 'bg-emerald-600' },

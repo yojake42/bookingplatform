@@ -1,51 +1,82 @@
 @import 'tailwindcss';
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
+/*
+ * Haven design language: editorial and calm, like a boutique hotel's printed guide.
+ * Warm paper surfaces, deep pine and brass, a serif display face, crisp (not pill-shaped)
+ * geometry, and an arched-doorway motif as the brand signature.
+ */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
 
-  --color-brand-50: #fff1f3;
-  --color-brand-100: #ffe0e5;
-  --color-brand-200: #ffc6d0;
-  --color-brand-300: #ff9cad;
-  --color-brand-400: #ff6383;
-  --color-brand-500: #f8335c;
-  --color-brand-600: #e11d48;
-  --color-brand-700: #be123c;
-  --color-brand-800: #9f1239;
-  --color-brand-900: #881337;
+  /* Primary: deep pine. */
+  --color-pine-50: #eef4f1;
+  --color-pine-100: #d6e5de;
+  --color-pine-200: #afcbbe;
+  --color-pine-300: #82ac9a;
+  --color-pine-400: #578b77;
+  --color-pine-500: #3b705d;
+  --color-pine-600: #2c5a4a;
+  --color-pine-700: #224a3d;
+  --color-pine-800: #1b3b31;
+  --color-pine-900: #142d26;
 
-  --color-ink-50: #f7f7f8;
-  --color-ink-100: #efeff1;
-  --color-ink-200: #e2e2e6;
-  --color-ink-300: #c9c9d0;
-  --color-ink-400: #9a9aa5;
-  --color-ink-500: #71717c;
-  --color-ink-600: #55555f;
-  --color-ink-700: #3d3d45;
-  --color-ink-800: #26262c;
-  --color-ink-900: #16161a;
+  /* Errors and destructive actions: rust. */
+  --color-danger-50: #fbefeb;
+  --color-danger-100: #f5d9d0;
+  --color-danger-200: #ebb3a3;
+  --color-danger-300: #dd8670;
+  --color-danger-400: #cd5f45;
+  --color-danger-500: #b9472e;
+  --color-danger-600: #a23b26;
+  --color-danger-700: #86301f;
+  --color-danger-800: #6c281b;
+  --color-danger-900: #561f16;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 16px rgb(0 0 0 / 0.08);
-  --shadow-float: 0 8px 28px rgb(0 0 0 / 0.14);
-  --shadow-ring: 0 0 0 1px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.06);
+  /* Warm neutrals (stone and ink). */
+  --color-ink-50: #f6f3ee;
+  --color-ink-100: #eee9e1;
+  --color-ink-200: #e2dbcf;
+  --color-ink-300: #ccc2b3;
+  --color-ink-400: #a39888;
+  --color-ink-500: #7c7264;
+  --color-ink-600: #5e564b;
+  --color-ink-700: #453f37;
+  --color-ink-800: #2d2924;
+  --color-ink-900: #1c1a17;
 
-  --animate-fade-in: fade-in 180ms ease-out both;
-  --animate-pop-in: pop-in 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-  --animate-slide-up: slide-up 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  --animate-slide-in-right: slide-in-right 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --color-paper: #faf7f2;
+  --color-sand: #f1ebe1;
+  --color-brass: #b07f2c;
+  --color-brass-light: #e9d8b4;
+
+  /* Crisper geometry than the usual app-pill look. */
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 1rem;
+
+  --shadow-card: 0 1px 0 rgb(28 26 23 / 0.04), 0 10px 30px -12px rgb(28 26 23 / 0.18);
+  --shadow-float: 0 18px 50px -12px rgb(28 26 23 / 0.28), 0 2px 6px rgb(28 26 23 / 0.06);
+  --shadow-ring: 0 0 0 1px rgb(28 26 23 / 0.08), 0 1px 2px rgb(28 26 23 / 0.06);
+
+  --animate-fade-in: fade-in 220ms ease-out both;
+  --animate-pop-in: pop-in 240ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  --animate-slide-up: slide-up 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in-right: slide-in-right 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-rise: rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
   @keyframes pop-in {
-    from { opacity: 0; transform: scale(0.96) translateY(6px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+    from { opacity: 0; transform: translateY(6px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   @keyframes slide-up {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes slide-in-right {
@@ -56,6 +87,10 @@
     from { background-position: -400px 0; }
     to { background-position: 400px 0; }
   }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: none; }
+  }
 }
 
 @layer base {
@@ -65,14 +100,13 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    @apply bg-white text-ink-900;
-    font-feature-settings: 'cv11', 'ss01';
+    @apply bg-paper text-ink-900;
   }
   ::selection {
-    @apply bg-brand-100 text-brand-900;
+    @apply bg-pine-100 text-pine-900;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-ink-900;
+    @apply outline-2 outline-offset-2 outline-pine-600;
   }
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']) {
@@ -81,6 +115,32 @@
 }
 
 @layer components {
+  /* Small caps labels used throughout ("eyebrows"). */
+  .eyebrow {
+    @apply text-[11px] font-bold tracking-[0.16em] text-ink-500 uppercase;
+  }
+  /* Display serif with optical sizing tuned for headlines. */
+  .display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-variation-settings: 'SOFT' 50, 'WONK' 0;
+    letter-spacing: -0.015em;
+  }
+  /* The arched-doorway mask: Haven's signature shape. */
+  .arch {
+    border-radius: 999px 999px 0.75rem 0.75rem;
+  }
+  .arch-sm {
+    border-radius: 999px 999px 0.5rem 0.5rem;
+  }
+  /* Hairline rule with a tiny brass diamond in the middle, for section breaks. */
+  .rule-ornament {
+    @apply relative h-px bg-ink-200;
+  }
+  .rule-ornament::after {
+    content: '';
+    @apply absolute top-1/2 left-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-brass;
+  }
   .skeleton {
     background: linear-gradient(90deg, var(--color-ink-100) 0%, var(--color-ink-50) 40%, var(--color-ink-100) 80%);
     background-size: 800px 100%;
@@ -93,25 +153,47 @@
     display: none;
   }
   .field-label {
-    @apply mb-1.5 block text-sm font-medium text-ink-700;
+    @apply mb-1.5 block text-[13px] font-semibold text-ink-700;
   }
   .field {
-    @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 shadow-[0_1px_0_rgb(0_0_0/0.02)] transition outline-none placeholder:text-ink-400 hover:border-ink-300 focus:border-ink-900 focus:ring-4 focus:ring-ink-900/5 disabled:bg-ink-50 disabled:text-ink-500;
+    @apply w-full rounded-lg border border-ink-200 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 transition outline-none placeholder:text-ink-400 hover:border-ink-300 focus:border-pine-600 focus:ring-4 focus:ring-pine-600/10 disabled:bg-ink-50 disabled:text-ink-500;
   }
   .field-invalid {
-    @apply border-brand-500 focus:border-brand-600 focus:ring-brand-500/10;
+    @apply border-danger-500 focus:border-danger-600 focus:ring-danger-500/10;
+  }
+  /* Ticket edge: a dashed tear line with punched notches, for the reservation card. */
+  .ticket-tear {
+    @apply relative border-t border-dashed border-ink-300;
+  }
+  .ticket-tear::before,
+  .ticket-tear::after {
+    content: '';
+    @apply absolute -top-2.5 size-5 rounded-full bg-paper ring-1 ring-ink-200;
+  }
+  .ticket-tear::before {
+    left: -1.85rem;
+  }
+  .ticket-tear::after {
+    right: -1.85rem;
   }
 }
 
-/* MapLibre tweaks */
+/* Maps: warm the neutral basemap so it sits on the paper palette. Markers are DOM and unaffected. */
+.maplibregl-canvas {
+  filter: sepia(0.22) saturate(0.85) brightness(1.02);
+}
 .maplibregl-ctrl-group {
-  @apply overflow-hidden rounded-xl! border-0! shadow-ring!;
+  @apply overflow-hidden rounded-lg! border-0! shadow-ring!;
 }
 .maplibregl-ctrl-attrib {
   @apply text-[10px];
 }
+/* Price tags carry inline z-indexes (1, or 10 when active); a preview must always sit above them. */
+.maplibregl-popup {
+  z-index: 50;
+}
 .maplibregl-popup-content {
-  @apply rounded-2xl! p-0! shadow-float!;
+  @apply rounded-xl! p-0! shadow-float!;
 }
 .maplibregl-popup-tip {
   display: none;

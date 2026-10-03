@@ -242,7 +242,7 @@ function BookingDrawer({ id, onClose }: { id: string | null; onClose: () => void
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">Refund {money(refund.amount, data.currency)}</div>
                       <div className="truncate text-xs text-ink-500">{format(new Date(refund.createdAt), 'MMM d, h:mm a')} · {refund.initiatedBy}{refund.reason ? ` · ${refund.reason}` : ''}</div>
-                      {refund.failureMessage && <div className="text-xs text-brand-700">{refund.failureMessage}</div>}
+                      {refund.failureMessage && <div className="text-xs text-danger-700">{refund.failureMessage}</div>}
                     </div>
                     <Badge tone={refundTone[refund.status]}>{refund.status.toLowerCase()}</Badge>
                     {refund.status === 'FAILED' && (
@@ -274,7 +274,7 @@ function BookingDrawer({ id, onClose }: { id: string | null; onClose: () => void
                 {data.emails.map((email) => (
                   <li key={email.id}>
                     <button type="button" onClick={() => setEmailId(email.id)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-ink-50">
-                      <span className={clsx('size-2 shrink-0 rounded-full', email.status === 'SENT' ? 'bg-emerald-500' : email.status === 'FAILED' ? 'bg-brand-500' : 'bg-amber-400')} />
+                      <span className={clsx('size-2 shrink-0 rounded-full', email.status === 'SENT' ? 'bg-emerald-500' : email.status === 'FAILED' ? 'bg-danger-500' : 'bg-amber-400')} />
                       <span className="min-w-0 flex-1 truncate">{email.subject}</span>
                       <span className="shrink-0 text-xs text-ink-500">{format(new Date(email.createdAt), 'MMM d')}</span>
                     </button>
@@ -287,7 +287,7 @@ function BookingDrawer({ id, onClose }: { id: string | null; onClose: () => void
           <div className="space-y-1 border-t border-ink-100 pt-4 text-xs text-ink-500">
             <div>Booked {format(new Date(data.createdAt), 'MMM d, yyyy h:mm a')} via {data.source === 'STAFF' ? `staff (${data.createdBy ?? 'unknown'})` : 'website'}</div>
             {data.confirmedAt && <div>Confirmed {format(new Date(data.confirmedAt), 'MMM d, yyyy h:mm a')}</div>}
-            {data.cancelledAt && <div className="text-brand-700">Cancelled {format(new Date(data.cancelledAt), 'MMM d, yyyy h:mm a')} by {data.cancelledBy}{data.cancellationReason ? ` — “${data.cancellationReason}”` : ''}</div>}
+            {data.cancelledAt && <div className="text-danger-700">Cancelled {format(new Date(data.cancelledAt), 'MMM d, yyyy h:mm a')} by {data.cancelledBy}{data.cancellationReason ? ` — “${data.cancellationReason}”` : ''}</div>}
           </div>
           {data.review && (
             <div className="rounded-2xl p-4 ring-1 ring-ink-200">

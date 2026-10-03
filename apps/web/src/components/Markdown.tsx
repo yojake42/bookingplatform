@@ -3,9 +3,9 @@ import remarkGfm from 'remark-gfm';
 
 /** Styled markdown for legal pages. react-markdown never renders raw HTML, so admin content can't inject markup. */
 const components: Components = {
-  h1: ({ children }) => <h2 className="mt-10 mb-3 text-2xl font-bold tracking-tight first:mt-0">{children}</h2>,
-  h2: ({ children }) => <h2 className="mt-10 mb-3 text-xl font-semibold tracking-tight first:mt-0">{children}</h2>,
-  h3: ({ children }) => <h3 className="mt-8 mb-2 text-lg font-semibold">{children}</h3>,
+  h1: ({ children }) => <h2 className="display mt-10 mb-3 text-3xl first:mt-0">{children}</h2>,
+  h2: ({ children }) => <h2 className="display mt-10 mb-3 text-2xl first:mt-0">{children}</h2>,
+  h3: ({ children }) => <h3 className="display mt-8 mb-2 text-xl">{children}</h3>,
   p: ({ children }) => <p className="my-4 text-[15px] leading-7 text-ink-700">{children}</p>,
   ul: ({ children }) => <ul className="my-4 list-disc space-y-1.5 pl-6 text-[15px] leading-7 text-ink-700 marker:text-ink-400">{children}</ul>,
   ol: ({ children }) => <ol className="my-4 list-decimal space-y-1.5 pl-6 text-[15px] leading-7 text-ink-700 marker:text-ink-400">{children}</ol>,

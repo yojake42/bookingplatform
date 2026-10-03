@@ -107,7 +107,7 @@ function SortableTile({ media, index, isCover, disabled, onCaption, onDelete, on
 
 function MenuItem({ icon, children, onClick, danger }: { icon: React.ReactNode; children: React.ReactNode; onClick: () => void; danger?: boolean }) {
   return (
-    <button type="button" onClick={onClick} className={clsx('flex w-full items-center gap-2.5 px-3.5 py-2 text-left transition hover:bg-ink-50', danger && 'text-brand-700')}>
+    <button type="button" onClick={onClick} className={clsx('flex w-full items-center gap-2.5 px-3.5 py-2 text-left transition hover:bg-ink-50', danger && 'text-danger-700')}>
       {icon}
       {children}
     </button>
@@ -126,7 +126,7 @@ function UploadTile({ upload, onRetry, onDismiss }: { upload: QueuedUpload; onRe
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
         {upload.status === 'error' ? (
           <>
-            <AlertCircle className="size-6 text-brand-600" />
+            <AlertCircle className="size-6 text-danger-600" />
             <p className="line-clamp-2 text-xs font-medium text-ink-900">{upload.error}</p>
             <div className="flex gap-1.5">
               <Button size="sm" variant="secondary" icon={<RotateCcw className="size-3.5" />} onClick={onRetry}>Retry</Button>

@@ -117,7 +117,7 @@ export function ListingsPage() {
         >
           <p className="text-[15px] text-ink-500">Start with a name. You'll add photos, location, pricing and everything else next — it stays a draft until you publish.</p>
           <Input label="Listing title" placeholder="e.g. Lakeside cabin with sauna" value={title} onChange={(event) => setTitle(event.target.value)} autoFocus minLength={3} maxLength={120} required />
-          {create.isError && <p className="text-sm text-brand-700">{create.error.message}</p>}
+          {create.isError && <p className="text-sm text-danger-700">{create.error.message}</p>}
           <Button type="submit" size="lg" className="w-full" loading={create.isPending} disabled={title.trim().length < 3}>
             Create draft
           </Button>

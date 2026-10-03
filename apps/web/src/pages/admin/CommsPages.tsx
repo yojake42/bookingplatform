@@ -76,7 +76,7 @@ export function EmailsPage() {
             {data.items.map((email) => (
               <li key={email.id}>
                 <button type="button" onClick={() => setOpenId(email.id)} className="flex w-full items-center gap-4 px-5 py-3.5 text-left transition hover:bg-ink-50">
-                  <span className={clsx('size-2 shrink-0 rounded-full', { SENT: 'bg-emerald-500', PENDING: 'bg-amber-400', SENDING: 'bg-amber-400', FAILED: 'bg-brand-500' }[email.status])} />
+                  <span className={clsx('size-2 shrink-0 rounded-full', { SENT: 'bg-emerald-500', PENDING: 'bg-amber-400', SENDING: 'bg-amber-400', FAILED: 'bg-danger-500' }[email.status])} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{email.subject}</span>
                     <span className="block truncate text-xs text-ink-500">To {email.toName ? `${email.toName} <${email.toEmail}>` : email.toEmail}</span>
@@ -145,7 +145,7 @@ export function EmailDrawer({ id, onClose }: { id: string | null; onClose: () =>
               {data.sentAt && <div className="flex gap-2"><dt className="w-20 shrink-0 text-ink-500">Sent</dt><dd>{format(new Date(data.sentAt), 'MMM d, yyyy h:mm:ss a')} via {data.provider}</dd></div>}
               <div className="flex gap-2"><dt className="w-20 shrink-0 text-ink-500">Attempts</dt><dd>{data.attempts}</dd></div>
             </dl>
-            {data.lastError && <p className="mt-3 rounded-xl bg-brand-50 p-3 text-xs text-brand-800">{data.lastError}</p>}
+            {data.lastError && <p className="mt-3 rounded-xl bg-danger-50 p-3 text-xs text-danger-800">{data.lastError}</p>}
           </div>
           {/* Sandboxed: the email's HTML can't run scripts or reach the console's origin. */}
           <iframe title="Email preview" sandbox="" srcDoc={data.html} className="h-[560px] w-full rounded-2xl bg-white ring-1 ring-ink-200" />
@@ -244,7 +244,7 @@ function LegalEditor({ type }: { type: LegalType }) {
             />
           ) : (
             <div className="min-h-[480px] rounded-xl p-6 ring-1 ring-ink-200">
-              <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+              <h1 className="display text-4xl">{title}</h1>
               <div className="mt-6"><Markdown>{content}</Markdown></div>
             </div>
           )}

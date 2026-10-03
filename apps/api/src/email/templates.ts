@@ -6,7 +6,8 @@ import { zonedDateTimeToUtc, zoneAbbreviation } from '../common/timezone';
 
 export type Rendered = { subject: string; html: string; text: string };
 
-const brand = { name: 'Haven', color: '#e11d48', ink: '#16161a', muted: '#71717c', line: '#ececf0' };
+const brand = { name: 'Haven', color: '#224a3d', accent: '#b07f2c', ink: '#1c1a17', muted: '#7c7264', line: '#e2dbcf', paper: '#faf7f2' };
+const serif = "Georgia,'Times New Roman',serif";
 
 export function escapeHtml(value: string | number | null | undefined) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
@@ -31,19 +32,17 @@ export function formatLocalTime(date: Date, time: string, zone: string) {
 function layout(options: { preheader: string; heading: string; body: string; footerNote?: string }) {
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(options.heading)}</title></head>
-<body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:${brand.ink};">
+<body style="margin:0;padding:0;background:${brand.paper};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${brand.ink};">
 <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(options.preheader)}</span>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;padding:32px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${brand.paper};padding:32px 12px;">
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 <tr><td style="padding:0 8px 20px;">
-  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-    <td style="background:${brand.color};border-radius:9px;width:32px;height:32px;text-align:center;vertical-align:middle;color:#fff;font-weight:800;font-size:18px;">&#8962;</td>
-    <td style="padding-left:10px;font-size:22px;font-weight:800;color:${brand.color};letter-spacing:-0.5px;">haven</td>
-  </tr></table>
+  <div style="font-family:${serif};font-size:28px;color:${brand.color};letter-spacing:-0.3px;">Haven</div>
+  <div style="width:28px;height:2px;background:${brand.accent};margin-top:6px;"></div>
 </td></tr>
-<tr><td style="background:#ffffff;border-radius:20px;padding:36px 32px;border:1px solid ${brand.line};">
-  <h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;letter-spacing:-0.4px;">${escapeHtml(options.heading)}</h1>
+<tr><td style="background:#ffffff;border-radius:12px;padding:36px 32px;border:1px solid ${brand.line};">
+  <h1 style="margin:0 0 16px;font-family:${serif};font-weight:normal;font-size:28px;line-height:1.2;color:${brand.ink};">${escapeHtml(options.heading)}</h1>
   ${options.body}
 </td></tr>
 <tr><td style="padding:20px 8px;font-size:12px;line-height:1.6;color:${brand.muted};text-align:center;">
@@ -54,11 +53,11 @@ function layout(options: { preheader: string; heading: string; body: string; foo
 </body></html>`;
 }
 
-const p = (html: string) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3d3d45;">${html}</p>`;
+const p = (html: string) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#453f37;">${html}</p>`;
 
 function button(url: string, label: string) {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;"><tr><td style="border-radius:12px;background:${brand.color};">
-<a href="${escapeHtml(url)}" style="display:inline-block;padding:13px 22px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">${escapeHtml(label)}</a>
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;"><tr><td style="border-radius:8px;background:${brand.color};">
+<a href="${escapeHtml(url)}" style="display:inline-block;padding:13px 22px;font-size:14px;font-weight:700;letter-spacing:0.3px;color:${brand.paper};text-decoration:none;border-radius:8px;">${escapeHtml(label)} &rarr;</a>
 </td></tr></table>`;
 }
 
@@ -182,7 +181,7 @@ export function stayReminderEmail(stay: StayInfo & { houseRules: string }): Rend
         p(`Your trip to <b>${escapeHtml(stay.listing.city)}</b> is just around the corner. Here are your arrival details.`) +
         rows(stayRows(stay, { address: true })) +
         (rules.length
-          ? `<p style="margin:0 0 8px;font-size:15px;font-weight:700;">House rules</p><ul style="margin:0 0 20px;padding-left:20px;font-size:14px;line-height:1.7;color:#3d3d45;">${rules.map((rule) => `<li>${escapeHtml(rule)}</li>`).join('')}</ul>`
+          ? `<p style="margin:0 0 8px;font-size:15px;font-weight:700;">House rules</p><ul style="margin:0 0 20px;padding-left:20px;font-size:14px;line-height:1.7;color:#453f37;">${rules.map((rule) => `<li>${escapeHtml(rule)}</li>`).join('')}</ul>`
           : '') +
         button(stay.tripUrl, 'View booking & map'),
       footerNote: 'Times are local to the home.',

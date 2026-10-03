@@ -12,18 +12,18 @@ type ButtonVariant = 'primary' | 'brand' | 'secondary' | 'ghost' | 'danger' | 'l
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary: 'bg-ink-900 text-white hover:bg-ink-800 active:bg-black shadow-sm',
-  brand: 'text-white shadow-sm bg-[linear-gradient(90deg,var(--color-brand-600),var(--color-brand-500)_50%,var(--color-brand-600))] bg-[length:200%_100%] bg-left hover:bg-right transition-[background-position] duration-500',
-  secondary: 'bg-white text-ink-900 ring-1 ring-ink-200 hover:bg-ink-50 hover:ring-ink-300 shadow-[0_1px_0_rgb(0_0_0/0.03)]',
+  primary: 'bg-ink-900 text-paper hover:bg-ink-800 active:bg-black',
+  brand: 'bg-pine-700 text-paper hover:bg-pine-800 active:bg-pine-900 shadow-[inset_0_-2px_0_rgb(0_0_0/0.18)]',
+  secondary: 'bg-white text-ink-900 ring-1 ring-ink-300 hover:ring-ink-900',
   ghost: 'text-ink-700 hover:bg-ink-100 hover:text-ink-900',
-  danger: 'bg-white text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50',
+  danger: 'bg-white text-danger-700 ring-1 ring-danger-200 hover:bg-danger-50',
   link: 'text-ink-900 underline underline-offset-4 decoration-ink-300 hover:decoration-ink-900 px-0! h-auto!',
 };
 
 const buttonSizes: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-sm gap-1.5 rounded-lg',
-  md: 'h-10 px-4 text-[15px] gap-2 rounded-xl',
-  lg: 'h-12 px-6 text-base gap-2 rounded-xl',
+  sm: 'h-8 px-3 text-[13px] gap-1.5 rounded-md',
+  md: 'h-10 px-4 text-sm gap-2 rounded-lg',
+  lg: 'h-12 px-6 text-[15px] gap-2 rounded-lg tracking-[0.01em]',
 };
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -43,7 +43,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex shrink-0 items-center justify-center font-semibold whitespace-nowrap transition duration-150 select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
+        'inline-flex shrink-0 items-center justify-center font-bold whitespace-nowrap transition duration-150 select-none active:translate-y-px disabled:pointer-events-none disabled:opacity-45',
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -63,7 +63,7 @@ export function IconButton({ className, label, children, ...rest }: ButtonHTMLAt
       aria-label={label}
       title={label}
       className={clsx(
-        'inline-flex size-9 shrink-0 items-center justify-center rounded-full text-ink-700 transition hover:bg-ink-100 hover:text-ink-900 active:scale-95 disabled:opacity-40',
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-700 transition hover:bg-ink-100 hover:text-ink-900 active:translate-y-px disabled:opacity-40',
         className,
       )}
       {...rest}
@@ -90,7 +90,7 @@ export function FieldShell({ label, hint, error, className, children }: FieldShe
       )}
       {children(id)}
       {error ? (
-        <p className="mt-1.5 text-sm text-brand-700">{error}</p>
+        <p className="mt-1.5 text-sm text-danger-700">{error}</p>
       ) : hint ? (
         <p className="mt-1.5 text-sm text-ink-500">{hint}</p>
       ) : null}
@@ -168,7 +168,7 @@ export function Switch({ checked, onChange, label, description, disabled }: { ch
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={clsx('relative mt-0.5 inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200', checked ? 'bg-ink-900' : 'bg-ink-200')}
+        className={clsx('relative mt-0.5 inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200', checked ? 'bg-pine-700' : 'bg-ink-200')}
       >
         <span
           className={clsx(
@@ -194,7 +194,7 @@ export function Counter({ value, onChange, min = 0, max = 99, label, description
           aria-label="Decrease"
           disabled={value <= min}
           onClick={() => onChange(Math.max(min, +(value - step).toFixed(1)))}
-          className="flex size-8 items-center justify-center rounded-full border border-ink-300 text-ink-700 transition hover:border-ink-900 hover:text-ink-900 active:scale-90 disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex size-8 items-center justify-center rounded-md border border-ink-300 bg-white text-ink-700 transition hover:border-pine-700 hover:text-pine-700 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Minus className="size-4" />
         </button>
@@ -204,7 +204,7 @@ export function Counter({ value, onChange, min = 0, max = 99, label, description
           aria-label="Increase"
           disabled={value >= max}
           onClick={() => onChange(Math.min(max, +(value + step).toFixed(1)))}
-          className="flex size-8 items-center justify-center rounded-full border border-ink-300 text-ink-700 transition hover:border-ink-900 hover:text-ink-900 active:scale-90 disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex size-8 items-center justify-center rounded-md border border-ink-300 bg-white text-ink-700 transition hover:border-pine-700 hover:text-pine-700 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Plus className="size-4" />
         </button>
@@ -251,7 +251,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md', bod
   if (!open) return null;
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
-      <div className="absolute inset-0 animate-fade-in bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 animate-fade-in bg-ink-900/55 backdrop-blur-[3px]" onClick={onClose} />
       <div
         ref={panel}
         role="dialog"
@@ -259,23 +259,23 @@ export function Modal({ open, onClose, title, children, footer, size = 'md', bod
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
         className={clsx(
-          'relative flex max-h-[92dvh] w-full animate-slide-up flex-col overflow-hidden rounded-t-3xl bg-white shadow-float outline-none sm:animate-pop-in sm:rounded-3xl',
+          'relative flex max-h-[92dvh] w-full animate-slide-up flex-col overflow-hidden rounded-t-2xl bg-paper shadow-float outline-none sm:animate-pop-in sm:rounded-2xl',
           modalSizes[size],
         )}
       >
         {title !== undefined && (
-          <div className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-ink-100 px-5">
+          <div className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-ink-200 px-5">
             <IconButton label="Close" onClick={onClose} className="-ml-2">
               <X className="size-5" />
             </IconButton>
-            <h2 id={titleId} className="flex-1 truncate text-center text-base font-semibold">
+            <h2 id={titleId} className="display flex-1 truncate text-center text-lg">
               {title}
             </h2>
             <span className="w-7" />
           </div>
         )}
         <div className={clsx('min-h-0 flex-1 overflow-y-auto', bodyClassName ?? 'p-6')}>{children}</div>
-        {footer && <div className="shrink-0 border-t border-ink-100 px-6 py-4">{footer}</div>}
+        {footer && <div className="shrink-0 border-t border-ink-200 bg-white/60 px-6 py-4">{footer}</div>}
       </div>
     </div>,
     document.body,
@@ -294,9 +294,9 @@ export function Drawer({ open, onClose, title, children, footer }: { open: boole
   return createPortal(
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 animate-fade-in bg-black/40" onClick={onClose} />
-      <aside className="absolute inset-y-0 right-0 flex w-full max-w-lg animate-slide-in-right flex-col bg-white shadow-float">
+      <aside className="absolute inset-y-0 right-0 flex w-full max-w-lg animate-slide-in-right flex-col bg-paper shadow-float">
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-ink-100 px-5">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="display text-xl">{title}</h2>
           <IconButton label="Close" onClick={onClose}>
             <X className="size-5" />
           </IconButton>
@@ -322,7 +322,7 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, description, co
 }) {
   return (
     <Modal open={open} onClose={onClose} size="sm" bodyClassName="p-6">
-      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+      <h2 className="display text-2xl">{title}</h2>
       {description && <div className="mt-2 text-[15px] leading-relaxed text-ink-600">{description}</div>}
       {children && <div className="mt-4">{children}</div>}
       <div className="mt-6 flex justify-end gap-3">
@@ -347,16 +347,16 @@ export function Spinner({ className }: { className?: string }) {
 
 const badgeTones = {
   neutral: 'bg-ink-100 text-ink-700',
-  green: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15',
-  amber: 'bg-amber-50 text-amber-800 ring-1 ring-amber-600/15',
-  red: 'bg-brand-50 text-brand-700 ring-1 ring-brand-600/15',
-  blue: 'bg-sky-50 text-sky-700 ring-1 ring-sky-600/15',
-  dark: 'bg-ink-900 text-white',
+  green: 'bg-pine-50 text-pine-700 ring-1 ring-pine-600/20',
+  amber: 'bg-amber-50 text-amber-800 ring-1 ring-amber-600/20',
+  red: 'bg-danger-50 text-danger-700 ring-1 ring-danger-600/20',
+  blue: 'bg-sky-50 text-sky-800 ring-1 ring-sky-700/15',
+  dark: 'bg-ink-900 text-paper',
 };
 
 export function Badge({ tone = 'neutral', children, className }: { tone?: keyof typeof badgeTones; children: ReactNode; className?: string }) {
   return (
-    <span className={clsx('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap', badgeTones[tone], className)}>
+    <span className={clsx('inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold tracking-wide whitespace-nowrap uppercase', badgeTones[tone], className)}>
       {children}
     </span>
   );
@@ -368,9 +368,9 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function EmptyState({ icon, title, description, action }: { icon?: ReactNode; title: string; description?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-ink-200 px-6 py-16 text-center">
-      {icon && <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-ink-50 text-ink-500">{icon}</div>}
-      <h3 className="text-lg font-semibold">{title}</h3>
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ink-300 bg-white/50 px-6 py-16 text-center">
+      {icon && <div className="arch-sm mb-4 flex h-16 w-12 items-center justify-center bg-sand text-pine-700">{icon}</div>}
+      <h3 className="display text-2xl">{title}</h3>
       {description && <p className="mt-1.5 max-w-sm text-[15px] text-ink-500">{description}</p>}
       {action && <div className="mt-6">{action}</div>}
     </div>
@@ -382,7 +382,7 @@ export function Stars({ value, size = 'size-4', onChange }: { value: number; siz
     <div className="flex items-center gap-0.5" role={onChange ? 'radiogroup' : undefined}>
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = star <= Math.round(value);
-        const icon = <Star className={clsx(size, filled ? 'fill-ink-900 text-ink-900' : 'fill-ink-200 text-ink-200', onChange && 'transition-transform hover:scale-110')} />;
+        const icon = <Star className={clsx(size, filled ? 'fill-brass text-brass' : 'fill-ink-200 text-ink-200', onChange && 'transition-transform hover:scale-110')} />;
         return onChange ? (
           <button key={star} type="button" role="radio" aria-checked={star === value} aria-label={`${star} star${star === 1 ? '' : 's'}`} onClick={() => onChange(star)}>
             {icon}
@@ -403,11 +403,12 @@ export function Avatar({ name, className }: { name: string; className?: string }
     .slice(0, 2)
     .join('')
     .toUpperCase();
-  const hue = [...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360;
+  const palette = ['#224a3d', '#8a5a2b', '#3b5f78', '#6b4f6e', '#4f6b3a', '#9a4a3a', '#45615c'];
+  const color = palette[[...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % palette.length];
   return (
     <span
-      className={clsx('inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white', className ?? 'size-10 text-sm')}
-      style={{ background: `linear-gradient(135deg, hsl(${hue} 55% 52%), hsl(${(hue + 40) % 360} 60% 42%))` }}
+      className={clsx('inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-wide text-paper', className ?? 'size-10 text-sm')}
+      style={{ background: color }}
     >
       {initials}
     </span>
@@ -416,15 +417,15 @@ export function Avatar({ name, className }: { name: string; className?: string }
 
 export function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (value: T) => void; options: { value: T; label: ReactNode }[] }) {
   return (
-    <div className="inline-flex rounded-xl bg-ink-100 p-1">
+    <div className="inline-flex rounded-lg border border-ink-300 bg-white p-0.5">
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           onClick={() => onChange(option.value)}
           className={clsx(
-            'rounded-lg px-3.5 py-1.5 text-sm font-semibold transition',
-            option.value === value ? 'bg-white text-ink-900 shadow-ring' : 'text-ink-500 hover:text-ink-900',
+            'rounded-md px-3.5 py-1.5 text-[13px] font-bold whitespace-nowrap transition',
+            option.value === value ? 'bg-pine-700 text-paper' : 'text-ink-600 hover:text-ink-900',
           )}
         >
           {option.label}
@@ -435,5 +436,5 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
 }
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={clsx('rounded-2xl bg-white ring-1 ring-ink-200/70 shadow-[0_1px_2px_rgb(0_0_0/0.03)]', className)}>{children}</div>;
+  return <div className={clsx('rounded-xl bg-white ring-1 ring-ink-200', className)}>{children}</div>;
 }

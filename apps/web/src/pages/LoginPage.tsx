@@ -36,27 +36,30 @@ export function LoginPage() {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden lg:block">
-        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80" alt="" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute right-12 bottom-12 left-12 text-white">
-          <p className="text-3xl leading-tight font-bold tracking-tight">Every home, every calendar, one place.</p>
-          <p className="mt-3 text-white/80">Manage listings, availability and bookings for the Haven collection.</p>
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-pine-900 p-12 text-paper lg:flex">
+        <Logo tone="paper" />
+        <div className="arch mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden shadow-float ring-8 ring-paper/5">
+          <img src="https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=1000&q=80" alt="" className="h-full w-full object-cover" />
+        </div>
+        <div>
+          <p className="display text-[34px] leading-tight font-light">Every home, every calendar, <em className="text-brass-light">one place.</em></p>
+          <p className="mt-3 text-paper/65">Listings, availability, bookings and payments for the Haven collection.</p>
         </div>
       </div>
       <div className="flex flex-col px-6 py-8 sm:px-12">
-        <Logo />
+        <div className="lg:hidden"><Logo /></div>
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">
-          <div className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-ink-900 text-white">
+          <div className="mb-6 flex size-11 items-center justify-center rounded-lg border border-ink-300 text-pine-700">
             <Lock className="size-5" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Staff sign in</h1>
-          <p className="mt-2 text-ink-500">Sign in to manage listings, calendars and bookings.</p>
+          <p className="eyebrow">Staff console</p>
+          <h1 className="display mt-2 text-[40px] leading-tight">Welcome back</h1>
+          <p className="mt-2 text-ink-500">Sign in to look after listings, calendars and bookings.</p>
           <form onSubmit={submit} className="mt-8 animate-fade-in space-y-4">
             <Input label="Email" type="email" autoComplete="email" required autoFocus value={email} onChange={(event) => setEmail(event.target.value)} />
             <Input label="Password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
-            {error && <p className="rounded-xl bg-brand-50 px-4 py-3 text-sm font-medium text-brand-800">{error}</p>}
-            <Button type="submit" size="lg" className="w-full" loading={busy}>
+            {error && <p className="rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger-800">{error}</p>}
+            <Button type="submit" variant="brand" size="lg" className="w-full" loading={busy}>
               Sign in
             </Button>
           </form>

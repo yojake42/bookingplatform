@@ -7,6 +7,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { ListingPage } from './pages/ListingPage';
 import { LoginPage } from './pages/LoginPage';
 import { SearchPage } from './pages/SearchPage';
+import { HomePage } from './pages/HomePage';
 import { TripLookupPage, TripPage } from './pages/TripPages';
 import { LegalPage } from './pages/LegalPage';
 import { DevCheckoutPage } from './pages/DevCheckoutPage';
@@ -20,7 +21,8 @@ import { AccountPage, ReviewsPage, UsersPage } from './pages/admin/StaffPages';
 function Root() {
   return (
     <AuthProvider>
-      <ScrollRestoration getKey={(location) => location.pathname} />
+      {/* Back/forward restores position; search and listing pages keep it while their URL params change. */}
+      <ScrollRestoration getKey={(location) => (location.pathname === '/stays' || location.pathname.startsWith('/listings/') ? location.pathname : location.key)} />
       <Outlet />
     </AuthProvider>
   );
@@ -46,11 +48,11 @@ function NotFound() {
     <div className="flex min-h-dvh flex-col">
       <PublicHeader />
       <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <div className="text-7xl font-extrabold tracking-tight text-ink-200">404</div>
-        <h1 className="mt-4 text-2xl font-bold">We can't find that page</h1>
+        <div className="display text-[120px] leading-none font-light text-brass">404</div>
+        <h1 className="display mt-4 text-3xl">This door doesn't open</h1>
         <p className="mt-2 text-ink-500">It may have moved, or the link might be wrong.</p>
         <Link to="/" className="mt-6">
-          <Button>Back to homes</Button>
+          <Button variant="brand">Back to the homepage</Button>
         </Link>
       </div>
     </div>
@@ -61,7 +63,8 @@ const router = createBrowserRouter([
   {
     element: <Root />,
     children: [
-      { path: '/', element: <SearchPage /> },
+      { path: '/', element: <HomePage /> },
+      { path: '/stays', element: <SearchPage /> },
       { path: '/listings/:id', element: <ListingPage /> },
       { path: '/book/:id', element: <CheckoutPage /> },
       { path: '/trips', element: <TripLookupPage /> },

@@ -52,7 +52,7 @@ export function LegalPage({ type }: { type: LegalType }) {
                   <Link to={`/${type}`} className="font-semibold underline">See the current version</Link>.
                 </div>
               )}
-              <h1 className="text-4xl font-bold tracking-tight">{document.title}</h1>
+              <h1 className="display text-[52px] leading-tight">{document.title}</h1>
               <p className="mt-3 text-sm text-ink-500">
                 Version {document.version} · Effective {format(new Date(document.publishedAt), 'MMMM d, yyyy')}
               </p>
@@ -81,11 +81,11 @@ export function LegalPage({ type }: { type: LegalType }) {
                     <li key={version.version}>
                       <Link
                         to={version.effectiveTo ? `/${type}?version=${version.version}` : `/${type}`}
-                        className={clsx('block rounded-xl px-3 py-2 transition', active ? 'bg-ink-900 text-white' : 'hover:bg-ink-100')}
+                        className={clsx('block rounded-xl px-3 py-2 transition', active ? 'bg-pine-800 text-paper' : 'hover:bg-sand')}
                       >
                         <span className="text-sm font-semibold">Version {version.version}{!version.effectiveTo && ' · current'}</span>
-                        <span className={clsx('block text-xs', active ? 'text-white/70' : 'text-ink-500')}>{period(version)}</span>
-                        {version.changeNote && <span className={clsx('mt-0.5 block text-xs', active ? 'text-white/80' : 'text-ink-600')}>{version.changeNote}</span>}
+                        <span className={clsx('block text-xs', active ? 'text-paper/70' : 'text-ink-500')}>{period(version)}</span>
+                        {version.changeNote && <span className={clsx('mt-0.5 block text-xs', active ? 'text-paper/80' : 'text-ink-600')}>{version.changeNote}</span>}
                       </Link>
                     </li>
                   );

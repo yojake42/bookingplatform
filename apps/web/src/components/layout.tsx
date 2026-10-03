@@ -1,128 +1,137 @@
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
-import { CalendarCheck2, Home, LayoutDashboard, LogOut, Mail, Menu, Scale, Settings, ShieldCheck, Star, Users, X } from 'lucide-react';
+import { ArrowUpRight, CalendarCheck2, Home, LayoutDashboard, LogOut, Mail, Menu, Scale, Settings, ShieldCheck, Star, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { useClickOutside } from '../lib/hooks';
+import { useLockBodyScroll } from '../lib/hooks';
 import { Avatar } from './ui';
 
-export function Logo({ compact }: { compact?: boolean }) {
+/** Arched doorway mark: Haven's signature shape. */
+export function LogoMark({ className, tone = 'pine' }: { className?: string; tone?: 'pine' | 'paper' }) {
+  const outer = tone === 'pine' ? '#224a3d' : '#faf7f2';
+  const inner = tone === 'pine' ? '#b07f2c' : '#e9d8b4';
   return (
-    <Link to="/" className="flex shrink-0 items-center gap-2 text-brand-600" aria-label="Haven home">
-      <svg viewBox="0 0 32 32" className="size-8">
-        <rect width="32" height="32" rx="9" fill="currentColor" />
-        <path d="M16 7.5 7.5 14.6V24.5h6.1v-5.7h4.8v5.7h6.1V14.6z" fill="#fff" />
-      </svg>
-      {!compact && <span className="text-[22px] font-extrabold tracking-tight">haven</span>}
+    <svg viewBox="0 0 28 32" className={className ?? 'h-8 w-7'} aria-hidden>
+      <path d="M3 30V13.5a11 11 0 0 1 22 0V30" fill="none" stroke={outer} strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M9.5 30V16a4.5 4.5 0 0 1 9 0v14" fill="none" stroke={inner} strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function Logo({ compact, tone = 'pine' }: { compact?: boolean; tone?: 'pine' | 'paper' }) {
+  return (
+    <Link to="/" className="group flex shrink-0 items-center gap-2.5" aria-label="Haven home">
+      <LogoMark tone={tone} className="h-8 w-7 transition-transform duration-300 group-hover:-translate-y-0.5" />
+      {!compact && <span className={clsx('display text-[27px] leading-none font-medium', tone === 'pine' ? 'text-pine-800' : 'text-paper')}>Haven</span>}
     </Link>
   );
 }
 
-function UserMenu() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex items-center gap-2.5 rounded-full py-1.5 pr-1.5 pl-3 ring-1 ring-ink-200 transition hover:shadow-[0_2px_8px_rgb(0_0_0/0.12)]"
-        aria-label="Menu"
-      >
-        <Menu className="size-4" />
-        {user ? <Avatar name={user.name} className="size-8 text-xs" /> : <span className="flex size-8 items-center justify-center rounded-full bg-ink-500 text-white"><Users className="size-4" /></span>}
-      </button>
-      {open && (
-        <div className="absolute top-[calc(100%+8px)] right-0 z-50 w-60 animate-pop-in overflow-hidden rounded-2xl bg-white py-2 shadow-float ring-1 ring-black/5">
-          {user ? (
-            <>
-              <div className="px-4 py-2">
-                <div className="text-sm font-semibold">{user.name}</div>
-                <div className="truncate text-xs text-ink-500">{user.email}</div>
-              </div>
-              <div className="my-1 h-px bg-ink-100" />
-              <MenuLink to="/admin" onClick={() => setOpen(false)}>Staff console</MenuLink>
-              <MenuLink to="/admin/account" onClick={() => setOpen(false)}>Account settings</MenuLink>
-              <div className="my-1 h-px bg-ink-100" />
-              <button
-                type="button"
-                className="w-full px-4 py-2.5 text-left text-sm hover:bg-ink-50"
-                onClick={async () => {
-                  setOpen(false);
-                  await logout();
-                  navigate('/');
-                }}
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <>
-              <MenuLink to="/trips" onClick={() => setOpen(false)} strong>Find my booking</MenuLink>
-              <div className="my-1 h-px bg-ink-100" />
-              <MenuLink to="/login" onClick={() => setOpen(false)}>Staff sign in</MenuLink>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MenuLink({ to, children, onClick, strong }: { to: string; children: ReactNode; onClick: () => void; strong?: boolean }) {
-  return (
-    <Link to={to} onClick={onClick} className={clsx('block px-4 py-2.5 text-sm hover:bg-ink-50', strong && 'font-semibold')}>
-      {children}
-    </Link>
-  );
-}
+const publicLinks = [
+  { to: '/stays', label: 'The collection' },
+  { to: '/trips', label: 'Manage a booking' },
+];
 
 export function PublicHeader({ center, sticky = true, wide }: { center?: ReactNode; sticky?: boolean; wide?: boolean }) {
   const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  useLockBodyScroll(open);
+
   return (
-    <header className={clsx('z-30 border-b border-ink-100 bg-white/95 backdrop-blur', sticky && 'sticky top-0')}>
-      <div className={clsx('mx-auto flex h-20 items-center gap-4 px-5 md:px-10', wide ? 'max-w-none' : 'max-w-[1440px]')}>
-        <div className="hidden flex-1 md:block">
-          <Logo />
+    <header className={clsx('z-30 border-b border-ink-200 bg-paper/92 backdrop-blur-md', sticky && 'sticky top-0')}>
+      <div className={clsx('mx-auto flex h-[72px] items-center gap-4 px-5 md:gap-6 md:px-10', wide ? 'max-w-none' : 'max-w-[1360px]')}>
+        <span className={clsx(center && 'hidden sm:block')}><Logo /></span>
+        {center && <span className="sm:hidden"><Logo compact /></span>}
+        <div className="flex min-w-0 flex-1 justify-center">
+          {center ?? (
+            <nav className="hidden items-center gap-9 md:flex">
+              {publicLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    clsx(
+                      'relative py-1 text-[13px] font-bold tracking-[0.08em] uppercase transition after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:bg-pine-700 after:transition-transform',
+                      isActive ? 'text-pine-800 after:scale-x-100' : 'text-ink-600 after:scale-x-0 hover:text-ink-900 hover:after:scale-x-100',
+                    )
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
         </div>
-        <div className="md:hidden">
-          <Logo compact />
-        </div>
-        <div className="flex min-w-0 flex-[3] justify-center">{center}</div>
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex shrink-0 items-center gap-3">
           {user ? (
-            <Link to="/admin" className="hidden rounded-full px-4 py-2.5 text-sm font-semibold transition hover:bg-ink-100 lg:block">
-              Manage listings
+            <Link to="/admin" className="hidden items-center gap-1.5 rounded-lg border border-pine-700/30 px-3 py-2 text-[13px] font-bold text-pine-800 transition hover:border-pine-700 md:flex">
+              Staff console <ArrowUpRight className="size-3.5" />
             </Link>
-          ) : (
-            <Link to="/trips" className="hidden rounded-full px-4 py-2.5 text-sm font-semibold transition hover:bg-ink-100 lg:block">
-              Find my booking
+          ) : center ? null : (
+            <Link to="/stays" className="hidden rounded-lg bg-pine-700 px-4 py-2.5 text-[13px] font-bold text-paper transition hover:bg-pine-800 md:block">
+              Find a stay
             </Link>
           )}
-          <UserMenu />
+          <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" className="flex size-10 items-center justify-center rounded-lg border border-ink-300 md:hidden">
+            <Menu className="size-5" />
+          </button>
         </div>
       </div>
+
+      {open && (
+        <div className="fixed inset-0 z-50 animate-fade-in bg-paper md:hidden">
+          <div className="flex h-[72px] items-center justify-between border-b border-ink-200 px-5">
+            <Logo />
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="flex size-10 items-center justify-center rounded-lg border border-ink-300">
+              <X className="size-5" />
+            </button>
+          </div>
+          <nav className="flex flex-col px-5 py-6">
+            {[{ to: '/', label: 'Home' }, ...publicLinks, { to: user ? '/admin' : '/login', label: user ? 'Staff console' : 'Staff sign in' }].map((link, index) => (
+              <Link key={link.to} to={link.to} onClick={() => setOpen(false)} className="flex items-baseline gap-4 border-b border-ink-200 py-5">
+                <span className="eyebrow w-6">0{index + 1}</span>
+                <span className="display text-3xl">{link.label}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
 
 export function Footer() {
+  const { user } = useAuth();
   return (
-    <footer className="border-t border-ink-100 bg-ink-50">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-5 py-8 text-sm text-ink-600 md:flex-row md:items-center md:justify-between md:px-10">
-        <div className="flex items-center gap-2">
-          <span>© {new Date().getFullYear()} Haven Stays</span>
-          <span>·</span>
-          <Link to="/trips" className="hover:underline">Find my booking</Link>
-          <span>·</span>
-          <Link to="/terms" className="hover:underline">Terms</Link>
-          <span>·</span>
-          <Link to="/privacy" className="hover:underline">Privacy</Link>
+    <footer className="bg-pine-900 text-paper">
+      <div className="mx-auto max-w-[1360px] px-5 pt-16 pb-10 md:px-10">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
+          <div>
+            <Logo tone="paper" />
+            <p className="display mt-6 max-w-sm text-3xl leading-tight font-light text-paper/90">
+              A small collection of homes, <em className="text-brass-light">each one looked after</em> by people who know it well.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-[11px] font-bold tracking-[0.16em] text-paper/50 uppercase">Explore</h3>
+            <ul className="mt-4 space-y-2.5 text-[15px]">
+              <li><Link to="/stays" className="text-paper/85 hover:text-paper">The collection</Link></li>
+              <li><Link to="/" className="text-paper/85 hover:text-paper">Home</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-[11px] font-bold tracking-[0.16em] text-paper/50 uppercase">Your stay</h3>
+            <ul className="mt-4 space-y-2.5 text-[15px]">
+              <li><Link to="/trips" className="text-paper/85 hover:text-paper">Manage a booking</Link></li>
+              <li><Link to="/terms" className="text-paper/85 hover:text-paper">Terms of Service</Link></li>
+              <li><Link to="/privacy" className="text-paper/85 hover:text-paper">Privacy Policy</Link></li>
+            </ul>
+          </div>
         </div>
-        <Link to="/login" className="hover:underline">Staff sign in</Link>
+        <div className="mt-14 flex flex-col gap-3 border-t border-paper/15 pt-6 text-[13px] text-paper/55 md:flex-row md:items-center md:justify-between">
+          <span>© {new Date().getFullYear()} Haven Stays. Totals include cleaning, with no booking fees.</span>
+          <Link to={user ? '/admin' : '/login'} className="hover:text-paper">{user ? 'Staff console' : 'Staff sign in'}</Link>
+        </div>
       </div>
     </footer>
   );
@@ -151,7 +160,7 @@ export function AdminLayout() {
   const items = adminNav.filter((item) => !item.adminOnly || user?.role === 'ADMIN');
 
   const nav = (
-    <nav className="flex flex-col gap-1">
+    <nav className="flex flex-col gap-0.5">
       {items.map((item) => (
         <NavLink
           key={item.to}
@@ -160,12 +169,14 @@ export function AdminLayout() {
           onClick={() => setMobileNav(false)}
           className={({ isActive }) =>
             clsx(
-              'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition',
-              isActive ? 'bg-ink-900 text-white shadow-sm' : 'text-ink-600 hover:bg-ink-100 hover:text-ink-900',
+              'relative flex items-center gap-3 rounded-md px-3 py-2.5 text-[14px] font-semibold transition',
+              isActive
+                ? 'bg-paper/10 text-paper before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-brass-light'
+                : 'text-paper/60 hover:bg-paper/5 hover:text-paper',
             )
           }
         >
-          <item.icon className="size-[18px]" />
+          <item.icon className="size-[17px]" />
           {item.label}
         </NavLink>
       ))}
@@ -173,17 +184,17 @@ export function AdminLayout() {
   );
 
   const account = user && (
-    <div className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-ink-200/70">
+    <div className="flex items-center gap-3 rounded-lg bg-paper/5 p-3 ring-1 ring-paper/10">
       <Avatar name={user.name} className="size-9 text-xs" />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold">{user.name}</div>
-        <div className="text-xs text-ink-500 capitalize">{user.role.toLowerCase()}</div>
+        <div className="truncate text-sm font-semibold text-paper">{user.name}</div>
+        <div className="text-xs text-paper/55 capitalize">{user.role.toLowerCase()}</div>
       </div>
       <button
         type="button"
         title="Sign out"
         aria-label="Sign out"
-        className="flex size-8 items-center justify-center rounded-lg text-ink-500 transition hover:bg-ink-100 hover:text-ink-900"
+        className="flex size-8 items-center justify-center rounded-md text-paper/60 transition hover:bg-paper/10 hover:text-paper"
         onClick={async () => {
           await logout();
           navigate('/login');
@@ -194,40 +205,40 @@ export function AdminLayout() {
     </div>
   );
 
-  return (
-    <div className="min-h-dvh bg-ink-50/60">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-6 border-r border-ink-200/70 bg-ink-50 px-4 py-5 lg:flex">
-        <div className="flex items-center justify-between px-2">
-          <Logo />
-          <span className="rounded-md bg-ink-900 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">Staff</span>
-        </div>
-        {nav}
-        <div className="mt-auto space-y-3">
-          <Link to="/" className="block rounded-xl px-3 py-2 text-sm font-medium text-ink-600 hover:bg-ink-100 hover:text-ink-900">
-            ← View public site
-          </Link>
-          {account}
-        </div>
-      </aside>
+  const sidebar = (
+    <>
+      <div className="flex items-center justify-between px-2">
+        <Logo tone="paper" />
+        <span className="rounded border border-brass-light/40 px-1.5 py-0.5 text-[9px] font-bold tracking-[0.18em] text-brass-light uppercase">Staff</span>
+      </div>
+      {nav}
+      <div className="mt-auto space-y-3">
+        <Link to="/" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-[13px] font-semibold text-paper/60 hover:text-paper">
+          View public site <ArrowUpRight className="size-3.5" />
+        </Link>
+        {account}
+      </div>
+    </>
+  );
 
-      <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-ink-200/70 bg-white/95 px-4 backdrop-blur lg:hidden">
-        <Logo />
-        <button type="button" aria-label="Open menu" onClick={() => setMobileNav(true)} className="flex size-10 items-center justify-center rounded-xl hover:bg-ink-100">
+  return (
+    <div className="min-h-dvh bg-paper">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-8 bg-pine-900 px-4 py-6 lg:flex">{sidebar}</aside>
+
+      <div className="sticky top-0 z-30 flex h-16 items-center justify-between bg-pine-900 px-4 lg:hidden">
+        <Logo tone="paper" />
+        <button type="button" aria-label="Open menu" onClick={() => setMobileNav(true)} className="flex size-10 items-center justify-center rounded-lg text-paper hover:bg-paper/10">
           <Menu className="size-5" />
         </button>
       </div>
       {mobileNav && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 animate-fade-in bg-black/40" onClick={() => setMobileNav(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 animate-fade-in flex-col gap-6 bg-ink-50 p-5 shadow-float">
-            <div className="flex items-center justify-between">
-              <Logo />
-              <button type="button" aria-label="Close menu" onClick={() => setMobileNav(false)} className="flex size-9 items-center justify-center rounded-lg hover:bg-ink-100">
-                <X className="size-5" />
-              </button>
-            </div>
-            {nav}
-            <div className="mt-auto">{account}</div>
+          <div className="absolute inset-y-0 left-0 flex w-72 animate-fade-in flex-col gap-8 bg-pine-900 p-5 shadow-float">
+            <button type="button" aria-label="Close menu" onClick={() => setMobileNav(false)} className="absolute top-5 right-4 flex size-9 items-center justify-center rounded-lg text-paper hover:bg-paper/10">
+              <X className="size-5" />
+            </button>
+            {sidebar}
           </div>
         </div>
       )}
@@ -243,10 +254,10 @@ export function AdminPage({ title, description, actions, children, back }: { tit
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-10">
       {back && <div className="mb-4">{back}</div>}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 border-b border-ink-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-[28px] font-bold tracking-tight text-ink-900">{title}</h1>
-          {description && <p className="mt-1 text-[15px] text-ink-500">{description}</p>}
+          <h1 className="display text-[34px] leading-tight text-ink-900">{title}</h1>
+          {description && <p className="mt-1.5 text-[15px] text-ink-500">{description}</p>}
         </div>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -254,4 +265,3 @@ export function AdminPage({ title, description, actions, children, back }: { tit
     </div>
   );
 }
-

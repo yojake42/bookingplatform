@@ -22,7 +22,7 @@ export function TripLookupPage() {
   const [code, setCode] = useState('');
   const [email, setEmail] = useState('');
   const [linksEmail, setLinksEmail] = useState('');
-  useDocumentTitle('Find my booking');
+  useDocumentTitle('Manage a booking');
   const lookup = useMutation({
     mutationFn: () => api<{ token: string }>('/public/trips/lookup', { method: 'POST', body: { code, email } }),
     onSuccess: (result) => navigate(`/trips/${result.token}`),
@@ -35,10 +35,10 @@ export function TripLookupPage() {
       <main className="flex flex-1 items-center justify-center px-5 py-16">
         <div className="w-full max-w-md space-y-4">
           <Card className="animate-slide-up p-8">
-            <div className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+            <div className="arch-sm mb-6 flex h-14 w-11 items-end justify-center bg-pine-700 pb-2.5 text-paper">
               <CalendarCheck2 className="size-6" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Find your booking</h1>
+            <h1 className="display text-3xl">Manage a booking</h1>
             <p className="mt-2 text-[15px] text-ink-500">Enter the confirmation code from your booking email and the email you booked with.</p>
             <form
               className="mt-8 space-y-4"
@@ -49,7 +49,7 @@ export function TripLookupPage() {
             >
               <Input label="Confirmation code" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="e.g. HX7K2M9Q" required className="font-mono tracking-widest uppercase" />
               <Input label="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
-              {lookup.isError && <p className="text-sm font-medium text-brand-700">{lookup.error.message}</p>}
+              {lookup.isError && <p className="text-sm font-medium text-danger-700">{lookup.error.message}</p>}
               <Button type="submit" size="lg" className="w-full" loading={lookup.isPending}>
                 Find booking
               </Button>
@@ -71,7 +71,7 @@ export function TripLookupPage() {
                 <Button type="submit" variant="secondary" loading={links.isPending}>Email me</Button>
               </form>
             )}
-            {links.isError && <p className="mt-2 text-sm text-brand-700">{links.error.message}</p>}
+            {links.isError && <p className="mt-2 text-sm text-danger-700">{links.error.message}</p>}
           </Card>
         </div>
       </main>
@@ -154,7 +154,7 @@ export function TripPage() {
           <h1 className="text-2xl font-bold">We couldn't find that booking</h1>
           <p className="mt-2 text-ink-500">Check the link, or look it up with your confirmation code.</p>
           <Link to="/trips" className="mt-6">
-            <Button>Find my booking</Button>
+            <Button variant="brand">Look up a booking</Button>
           </Link>
         </main>
       </div>
@@ -174,7 +174,7 @@ export function TripPage() {
       <PublicHeader />
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 md:px-10">
         {!data ? (
-          <Skeleton className="h-96 rounded-3xl" />
+          <Skeleton className="h-96 rounded-xl" />
         ) : (
           <div className="animate-slide-up">
             {status === 'CONFIRMED' && justBooked && (
@@ -218,13 +218,13 @@ export function TripPage() {
               </Banner>
             )}
 
-            <div className="overflow-hidden rounded-3xl ring-1 ring-ink-200">
+            <div className="overflow-hidden rounded-xl ring-1 ring-ink-200">
               <div className="relative h-56 bg-ink-100 sm:h-72">
                 {data.listing.coverUrl && <img src={data.listing.coverUrl} alt="" className={clsx('h-full w-full object-cover', muted && 'grayscale')} />}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
                 <div className="absolute right-6 bottom-6 left-6 text-white">
                   <StatusPill status={data.status} />
-                  <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{data.listing.title}</h2>
+                  <h2 className="display text-3xl leading-tight sm:text-[44px]">{data.listing.title}</h2>
                   <p className="text-white/85">{data.listing.city}, {data.listing.region}</p>
                 </div>
               </div>
@@ -239,7 +239,7 @@ export function TripPage() {
               <div className="space-y-10">
                 {status === 'CONFIRMED' && (
                   <section>
-                    <h3 className="flex items-center gap-2 text-xl font-semibold"><MapPin className="size-5" /> Getting there</h3>
+                    <h3 className="display flex items-center gap-2.5 text-2xl [&_svg]:text-brass"><MapPin className="size-5" /> Getting there</h3>
                     <p className="mt-2 text-[15px] text-ink-700">{address}</p>
                     {data.listing.latitude != null && data.listing.longitude != null && (
                       <LocationMap className="mt-4 h-72" location={{ latitude: data.listing.latitude, longitude: data.listing.longitude, precision: 'EXACT', radiusMeters: 0 }} />
@@ -247,11 +247,11 @@ export function TripPage() {
                   </section>
                 )}
                 {status === 'PENDING_PAYMENT' && (
-                  <p className="rounded-2xl bg-ink-50 p-4 text-sm text-ink-600">The exact address and arrival details appear here once payment is complete.</p>
+                  <p className="rounded-2xl bg-sand p-4 text-sm text-ink-600">The exact address and arrival details appear here once payment is complete.</p>
                 )}
                 {data.listing.houseRules && (
                   <section>
-                    <h3 className="flex items-center gap-2 text-xl font-semibold"><Clock className="size-5" /> House rules</h3>
+                    <h3 className="display flex items-center gap-2.5 text-2xl [&_svg]:text-brass"><Clock className="size-5" /> House rules</h3>
                     <ul className="mt-3 space-y-2 text-[15px] text-ink-700">
                       {data.listing.houseRules.split('\n').filter(Boolean).map((rule) => <li key={rule}>• {rule}</li>)}
                     </ul>
@@ -260,8 +260,8 @@ export function TripPage() {
                 )}
                 {data.canReview && <ReviewForm token={token} />}
                 {data.review && (
-                  <section className="rounded-3xl bg-ink-50 p-6">
-                    <h3 className="text-lg font-semibold">Your review</h3>
+                  <section className="rounded-xl bg-ink-50 p-6">
+                    <h3 className="display text-xl">Your note</h3>
                     <div className="mt-2"><Stars value={data.review.rating} /></div>
                     <p className="mt-2 text-[15px] text-ink-700">{data.review.comment}</p>
                   </section>
@@ -292,7 +292,7 @@ export function TripPage() {
                     {data.cleaningFee > 0 && <div className="flex justify-between text-ink-600"><span>Cleaning fee</span><span>{money(data.cleaningFee, data.currency)}</span></div>}
                     <div className="flex justify-between border-t border-ink-100 pt-3 font-semibold"><span>Total</span><span>{money(data.totalPrice, data.currency)}</span></div>
                     {data.payment.amountPaid > 0 && (
-                      <div className="flex justify-between text-sm text-emerald-700"><span className="flex items-center gap-1.5"><ReceiptText className="size-4" /> Paid</span><span>{money(data.payment.amountPaid, data.currency)}</span></div>
+                      <div className="flex justify-between text-sm text-pine-700"><span className="flex items-center gap-1.5"><ReceiptText className="size-4" /> Paid</span><span>{money(data.payment.amountPaid, data.currency)}</span></div>
                     )}
                     {data.payment.amountRefunded > 0 && (
                       <div className="flex justify-between text-sm text-ink-600"><span>Refunded</span><span>−{money(data.payment.amountRefunded, data.currency)}</span></div>
@@ -310,7 +310,7 @@ export function TripPage() {
                     <h3 className="font-semibold">Need to cancel?</h3>
                     <p className="mt-1 text-sm text-ink-500">{cancellationPolicies[data.listing.cancellationPolicy].description}</p>
                     {data.cancellation.fullRefundUntil && (
-                      <p className="mt-2 text-sm font-medium text-emerald-700">Full refund until {zonedDateTime(data.cancellation.fullRefundUntil, tz)}.</p>
+                      <p className="mt-2 text-sm font-medium text-pine-700">Full refund until {zonedDateTime(data.cancellation.fullRefundUntil, tz)}.</p>
                     )}
                     <Button variant="danger" className="mt-4 w-full" onClick={() => setCancelOpen(true)}>
                       Cancel booking
@@ -363,15 +363,15 @@ export function TripPage() {
 
 function Banner({ tone, icon, title, children }: { tone: 'green' | 'amber' | 'neutral'; icon: React.ReactNode; title: string; children: React.ReactNode }) {
   const tones = {
-    green: 'bg-emerald-50 ring-emerald-600/15 text-emerald-950 [&_svg]:text-emerald-600',
+    green: 'bg-pine-50 ring-pine-600/20 text-pine-900 [&_svg]:text-pine-700',
     amber: 'bg-amber-50 ring-amber-600/20 text-amber-950 [&_svg]:text-amber-600',
     neutral: 'bg-ink-50 ring-ink-200 text-ink-900 [&_svg]:text-ink-500',
   };
   return (
-    <div className={clsx('mb-8 flex animate-pop-in items-start gap-4 rounded-3xl p-6 ring-1', tones[tone])}>
+    <div className={clsx('mb-8 flex animate-pop-in items-start gap-4 rounded-xl p-6 ring-1', tones[tone])}>
       <span className="shrink-0">{icon}</span>
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <h1 className="display text-[28px] leading-tight">{title}</h1>
         <div className="mt-1 text-[15px] leading-relaxed opacity-85 [&_svg]:text-current">{children}</div>
       </div>
     </div>
@@ -380,9 +380,9 @@ function Banner({ tone, icon, title, children }: { tone: 'green' | 'amber' | 'ne
 
 function StatusPill({ status }: { status: Trip['status'] }) {
   const map = {
-    CONFIRMED: { label: 'Confirmed', className: 'text-emerald-700', icon: CheckCircle2 },
+    CONFIRMED: { label: 'Confirmed', className: 'text-pine-700', icon: CheckCircle2 },
     PENDING_PAYMENT: { label: 'Awaiting payment', className: 'text-amber-700', icon: AlarmClock },
-    CANCELLED: { label: 'Cancelled', className: 'text-brand-700', icon: XCircle },
+    CANCELLED: { label: 'Cancelled', className: 'text-danger-700', icon: XCircle },
     EXPIRED: { label: 'Expired', className: 'text-ink-600', icon: XCircle },
   }[status];
   return (
@@ -396,8 +396,8 @@ function StatusPill({ status }: { status: Trip['status'] }) {
 function Fact({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="px-6 py-5">
-      <div className="text-xs font-semibold tracking-wide text-ink-500 uppercase">{label}</div>
-      <div className="mt-1 text-lg font-semibold">{value}</div>
+      <div className="eyebrow">{label}</div>
+      <div className="display mt-1 text-2xl">{value}</div>
       <div className="text-sm text-ink-500">{detail}</div>
     </div>
   );
@@ -427,9 +427,9 @@ function ReviewForm({ token }: { token: string }) {
   const complete = Object.values(scores).every((value) => value > 0) && comment.trim().length >= 10;
 
   return (
-    <section id="review" className="scroll-mt-28 rounded-3xl p-6 ring-1 ring-ink-200">
-      <h3 className="flex items-center gap-2 text-xl font-semibold"><MessageSquareHeart className="size-5" /> How was your stay?</h3>
-      <p className="mt-1 text-[15px] text-ink-500">Your review helps future guests and your host.</p>
+    <section id="review" className="scroll-mt-28 rounded-xl p-6 ring-1 ring-ink-200">
+      <h3 className="display flex items-center gap-2.5 text-2xl [&_svg]:text-brass"><MessageSquareHeart className="size-5" /> How was your stay?</h3>
+      <p className="mt-1 text-[15px] text-ink-500">A few words help future guests and the people who look after this home.</p>
       <div className="mt-6 flex items-center justify-between rounded-2xl bg-ink-50 px-4 py-3">
         <span className="font-semibold">Overall</span>
         <Stars value={scores.rating} size="size-7" onChange={(value) => setScores({ ...scores, rating: value })} />
@@ -442,7 +442,7 @@ function ReviewForm({ token }: { token: string }) {
           </div>
         ))}
       </div>
-      <Textarea wrapperClassName="mt-6" label="Tell future guests about your stay" value={comment} onChange={(event) => setComment(event.target.value)} maxLength={3000} />
+      <Textarea wrapperClassName="mt-6" label="Your note to future guests" value={comment} onChange={(event) => setComment(event.target.value)} maxLength={3000} />
       <Button className="mt-4" disabled={!complete} loading={submit.isPending} onClick={() => submit.mutate()}>
         Submit review
       </Button>

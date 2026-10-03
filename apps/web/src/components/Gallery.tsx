@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
-import { ChevronLeft, ChevronRight, Grid3X3, ImageOff, Play, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageOff, Images, Play, X } from 'lucide-react';
 import { useLockBodyScroll } from '../lib/hooks';
 import type { Media } from '../lib/types';
 
@@ -11,7 +11,7 @@ function MediaThumb({ media, className, eager }: { media: Media; className?: str
       <div className={clsx('relative bg-ink-900', className)}>
         <video src={`${media.originalUrl}#t=0.5`} preload="metadata" muted playsInline className="h-full w-full object-cover" />
         <span className="absolute inset-0 flex items-center justify-center">
-          <span className="flex size-14 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur">
+          <span className="flex size-14 items-center justify-center rounded-full bg-paper/90 shadow-lg backdrop-blur">
             <Play className="ml-0.5 size-6 fill-ink-900" />
           </span>
         </span>
@@ -21,42 +21,55 @@ function MediaThumb({ media, className, eager }: { media: Media; className?: str
   return <img src={media.url} alt={media.caption} loading={eager ? 'eager' : 'lazy'} className={clsx('object-cover', className)} />;
 }
 
-/** Hero grid on the listing page: one large tile and up to four small ones. */
-export function GalleryGrid({ media, onOpen }: { media: Media[]; onOpen: (index?: number) => void }) {
-  if (!media.length) {
-    return (
-      <div className="flex aspect-[2/1] items-center justify-center rounded-3xl bg-ink-100 text-ink-400">
-        <ImageOff className="size-10" />
-      </div>
-    );
-  }
-  const tiles = media.slice(0, 5);
+/**
+ * Listing hero: one cinematic photo with the home's title set over it, and a filmstrip of the
+ * next photos beneath. (Deliberately not a mosaic.)
+ */
+export function HeroGallery({ media, onOpen, children }: { media: Media[]; onOpen: (index?: number) => void; children: ReactNode }) {
+  const [first, ...rest] = media;
+  const strip = rest.slice(0, 5);
   return (
-    <div className="relative">
-      <div className={clsx('grid h-[280px] gap-2 overflow-hidden rounded-3xl sm:h-[420px] lg:h-[480px]', tiles.length >= 5 ? 'sm:grid-cols-4 sm:grid-rows-2' : tiles.length >= 3 ? 'sm:grid-cols-3 sm:grid-rows-2' : 'sm:grid-cols-2')}>
-        {tiles.map((item, index) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => onOpen(index)}
-            className={clsx(
-              'group relative overflow-hidden bg-ink-100',
-              index === 0 ? 'sm:col-span-2 sm:row-span-2' : 'hidden sm:block',
-              tiles.length < 5 && tiles.length >= 3 && index === 0 && 'sm:col-span-2',
-            )}
-          >
-            <MediaThumb media={item} eager={index === 0} className="h-full w-full transition duration-500 group-hover:scale-[1.03] group-hover:brightness-90" />
+    <div>
+      <div className="relative overflow-hidden rounded-2xl bg-pine-900">
+        {first ? (
+          <button type="button" onClick={() => onOpen(0)} className="group block w-full" aria-label="Open photo gallery">
+            <MediaThumb media={first} eager className="aspect-[4/3] w-full opacity-95 transition duration-700 group-hover:scale-[1.015] sm:aspect-[21/9]" />
           </button>
-        ))}
+        ) : (
+          <div className="flex aspect-[21/9] items-center justify-center text-paper/40">
+            <ImageOff className="size-10" />
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-pine-900/90 via-pine-900/25 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 text-paper sm:p-10">{children}</div>
+        {media.length > 1 && (
+          <button
+            type="button"
+            onClick={() => onOpen()}
+            className="absolute top-4 right-4 flex items-center gap-2 rounded-md bg-paper/95 px-3 py-2 text-[12px] font-bold tracking-wide text-ink-900 uppercase shadow-sm transition hover:bg-white"
+          >
+            <Images className="size-4" />
+            Gallery · {media.length}
+          </button>
+        )}
       </div>
-      <button
-        type="button"
-        onClick={() => onOpen()}
-        className="absolute right-4 bottom-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold shadow-ring ring-1 ring-ink-900 transition hover:bg-ink-50 active:scale-95"
-      >
-        <Grid3X3 className="size-4" />
-        Show all {media.length > 1 ? `${media.length} ` : ''}photos
-      </button>
+      {strip.length > 0 && (
+        <div className="scrollbar-none mt-3 flex gap-3 overflow-x-auto">
+          {strip.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onOpen(index + 1)}
+              className="group relative aspect-[3/2] w-40 shrink-0 overflow-hidden rounded-lg bg-sand sm:w-auto sm:flex-1"
+            >
+              <MediaThumb media={item} className="h-full w-full transition duration-500 group-hover:scale-105" />
+              {index === strip.length - 1 && media.length > strip.length + 1 && (
+                <span className="absolute inset-0 flex items-center justify-center bg-pine-900/60 text-sm font-bold text-paper">+{media.length - strip.length - 1} more</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -84,17 +97,17 @@ export function GalleryModal({ media, open, startIndex, onClose, title }: { medi
 
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-50 animate-fade-in overflow-y-auto bg-white">
-      <div className="sticky top-0 z-10 flex h-16 items-center justify-between bg-white/95 px-4 backdrop-blur md:px-8">
-        <button type="button" onClick={onClose} className="flex size-10 items-center justify-center rounded-full hover:bg-ink-100" aria-label="Close photos">
+    <div className="fixed inset-0 z-50 animate-fade-in overflow-y-auto bg-paper">
+      <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-ink-200 bg-paper/95 px-4 backdrop-blur md:px-8">
+        <button type="button" onClick={onClose} className="flex size-10 items-center justify-center rounded-lg border border-ink-300 hover:border-ink-900" aria-label="Close photos">
           <ChevronLeft className="size-5" />
         </button>
-        <span className="truncate px-4 text-sm font-semibold">{title}</span>
+        <span className="display truncate px-4 text-lg">{title}</span>
         <span className="w-10" />
       </div>
-      <div className="mx-auto max-w-3xl columns-1 gap-2 px-4 pb-16 sm:columns-2">
+      <div className="mx-auto max-w-5xl columns-1 gap-4 px-4 pt-6 pb-16 sm:columns-2 lg:columns-3">
         {media.map((item, index) => (
-          <button key={item.id} type="button" onClick={() => setLightbox(index)} className="mb-2 block w-full overflow-hidden rounded-lg">
+          <button key={item.id} type="button" onClick={() => setLightbox(index)} className="mb-4 block w-full overflow-hidden rounded-lg">
             <MediaThumb
               media={item}
               className={clsx('w-full transition hover:brightness-90', item.kind === 'VIDEO' && 'aspect-video')}
@@ -130,7 +143,7 @@ function Lightbox({ media, index, onIndex, onClose }: { media: Media[]; index: n
   }, [index, media]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex animate-fade-in flex-col bg-black text-white">
+    <div className="fixed inset-0 z-[60] flex animate-fade-in flex-col bg-[#0f1f1a] text-paper">
       <div className="flex h-16 shrink-0 items-center justify-between px-4 md:px-8">
         <button type="button" onClick={onClose} className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold hover:bg-white/10">
           <X className="size-5" /> Close
@@ -148,10 +161,10 @@ function Lightbox({ media, index, onIndex, onClose }: { media: Media[]; index: n
         )}
         {media.length > 1 && (
           <>
-            <button type="button" aria-label="Previous" onClick={() => go(-1)} className="absolute left-4 flex size-12 items-center justify-center rounded-full border border-white/30 transition hover:bg-white/10 md:left-8">
+            <button type="button" aria-label="Previous" onClick={() => go(-1)} className="absolute left-4 flex size-12 items-center justify-center rounded-lg border border-paper/25 transition hover:bg-paper/10 md:left-8">
               <ChevronLeft className="size-6" />
             </button>
-            <button type="button" aria-label="Next" onClick={() => go(1)} className="absolute right-4 flex size-12 items-center justify-center rounded-full border border-white/30 transition hover:bg-white/10 md:right-8">
+            <button type="button" aria-label="Next" onClick={() => go(1)} className="absolute right-4 flex size-12 items-center justify-center rounded-lg border border-paper/25 transition hover:bg-paper/10 md:right-8">
               <ChevronRight className="size-6" />
             </button>
           </>

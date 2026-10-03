@@ -11,6 +11,18 @@ import type { Bounds, ListingCard, PublicLocation } from '../lib/types';
 // Search results map
 // ---------------------------------------------------------------------------
 
+const popupOffsets = {
+  center: [0, 0],
+  top: [0, 10],
+  'top-left': [0, 10],
+  'top-right': [0, 10],
+  bottom: [0, -40],
+  'bottom-left': [0, -40],
+  'bottom-right': [0, -40],
+  left: [32, -18],
+  right: [-32, -18],
+} satisfies Record<string, [number, number]>;
+
 type SearchMapProps = {
   listings: ListingCard[];
   hoveredId: string | null;
@@ -70,7 +82,7 @@ export function SearchMap({ listings, hoveredId, onHover, fitBounds, fitKey, sea
               key={listing.id}
               longitude={listing.location!.longitude}
               latitude={listing.location!.latitude}
-              anchor="center"
+              anchor="bottom"
               style={{ zIndex: active ? 10 : 1 }}
               onClick={(event) => {
                 event.originalEvent.stopPropagation();
@@ -82,8 +94,9 @@ export function SearchMap({ listings, hoveredId, onHover, fitBounds, fitKey, sea
                 onMouseEnter={() => onHover(listing.id)}
                 onMouseLeave={() => onHover(null)}
                 className={clsx(
-                  'rounded-full px-2.5 py-1 text-[13px] font-bold shadow-[0_2px_8px_rgb(0_0_0/0.18)] ring-1 transition-all duration-150',
-                  active ? 'scale-110 bg-ink-900 text-white ring-ink-900' : 'bg-white text-ink-900 ring-black/5 hover:scale-105',
+                  'relative mb-[6px] rounded-[5px] px-2 py-1 text-[12px] font-extrabold tracking-wide shadow-[0_4px_12px_rgb(20_45_38/0.3)] transition-all duration-150',
+                  'after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-x-[5px] after:border-t-[6px] after:border-x-transparent',
+                  active ? 'z-10 scale-110 bg-brass text-ink-900 after:border-t-brass' : 'bg-pine-800 text-paper after:border-t-pine-800 hover:bg-pine-700',
                 )}
               >
                 {money(listing.stayTotal ?? listing.nightlyPrice, listing.currency)}
@@ -95,26 +108,26 @@ export function SearchMap({ listings, hoveredId, onHover, fitBounds, fitKey, sea
           <Popup
             longitude={selected.location!.longitude}
             latitude={selected.location!.latitude}
-            anchor="bottom"
-            offset={22}
+            // No fixed anchor: MapLibre opens the preview on whichever side fits inside the map.
+            // Offsets clear the price tag, which sits just above the home's coordinate.
+            offset={popupOffsets}
+            focusAfterOpen={false}
             closeButton={false}
             onClose={() => setSelectedId(null)}
-            maxWidth="280px"
+            maxWidth="320px"
           >
-            <Link to={`/listings/${selected.id}${linkSearch}`} className="block w-[260px] overflow-hidden rounded-2xl">
-              {selected.images[0] && <img src={selected.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />}
-              <div className="p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="truncate text-sm font-semibold">{selected.title}</div>
+            <Link to={`/listings/${selected.id}${linkSearch}`} className="flex w-[300px] gap-3 overflow-hidden rounded-xl bg-paper p-2.5">
+              {selected.images[0] && <img src={selected.images[0].url} alt="" className="h-24 w-24 shrink-0 rounded-lg object-cover" />}
+              <div className="min-w-0 py-1">
+                <div className="eyebrow truncate text-[10px]!">{selected.propertyType} · {selected.city}</div>
+                <div className="display mt-1 line-clamp-2 text-[17px] leading-snug">{selected.title}</div>
+                <div className="mt-1.5 flex items-center gap-2 text-[13px]">
+                  <span><b>{money(selected.nightlyPrice, selected.currency)}</b> / night</span>
                   {selected.ratingAverage != null && (
-                    <span className="flex shrink-0 items-center gap-1 text-sm">
-                      <Star className="size-3.5 fill-ink-900" /> {rating(selected.ratingAverage)}
+                    <span className="flex items-center gap-0.5 text-ink-600">
+                      <Star className="size-3 fill-brass text-brass" /> {rating(selected.ratingAverage)}
                     </span>
                   )}
-                </div>
-                <div className="text-sm text-ink-500">{selected.city}</div>
-                <div className="mt-1 text-sm">
-                  <span className="font-semibold">{money(selected.nightlyPrice, selected.currency)}</span> night
                 </div>
               </div>
             </Link>
@@ -130,12 +143,12 @@ export function SearchMap({ listings, hoveredId, onHover, fitBounds, fitKey, sea
               onSearchArea(pendingArea);
               setPendingArea(null);
             }}
-            className="pointer-events-auto flex animate-pop-in items-center gap-2 rounded-full bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white shadow-float transition hover:bg-black"
+            className="pointer-events-auto flex animate-pop-in items-center gap-2 rounded-lg bg-pine-800 px-4 py-2.5 text-[13px] font-bold text-paper shadow-float transition hover:bg-pine-900"
           >
-            <Search className="size-4" /> Search this area
+            <Search className="size-4" /> Show homes in this area
           </button>
         ) : (
-          <label className="pointer-events-auto flex items-center gap-2.5 rounded-full bg-white px-4 py-2.5 text-sm font-semibold shadow-float">
+          <label className="pointer-events-auto flex items-center gap-2.5 rounded-lg bg-paper px-3.5 py-2 text-[13px] font-bold shadow-float ring-1 ring-ink-200">
             <input
               type="checkbox"
               checked={searchAsMove}
@@ -143,9 +156,9 @@ export function SearchMap({ listings, hoveredId, onHover, fitBounds, fitKey, sea
                 onSearchAsMoveChange(event.target.checked);
                 setPendingArea(null);
               }}
-              className="size-4 accent-ink-900"
+              className="size-4 accent-pine-700"
             />
-            Search as I move the map
+            Update results as I move the map
           </label>
         )}
       </div>
@@ -174,13 +187,13 @@ export function LocationMap({ location, className, interactive = true }: { locat
         <NavigationControl position="top-right" showCompass={false} />
         {approximate ? (
           <Source id="area" type="geojson" data={circle}>
-            <Layer id="area-fill" type="fill" paint={{ 'fill-color': '#e11d48', 'fill-opacity': 0.14 }} />
-            <Layer id="area-line" type="line" paint={{ 'line-color': '#e11d48', 'line-width': 2, 'line-opacity': 0.6 }} />
+            <Layer id="area-fill" type="fill" paint={{ 'fill-color': '#2c5a4a', 'fill-opacity': 0.14 }} />
+            <Layer id="area-line" type="line" paint={{ 'line-color': '#224a3d', 'line-width': 1.5, 'line-dasharray': [3, 2] }} />
           </Source>
         ) : null}
-        <Marker longitude={location.longitude} latitude={location.latitude} anchor="center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-[0_4px_14px_rgb(225_29_72/0.45)] ring-4 ring-white">
-            <Home className="size-5" />
+        <Marker longitude={location.longitude} latitude={location.latitude} anchor="bottom">
+          <span className="arch-sm flex h-12 w-10 items-end justify-center bg-pine-800 pb-2 text-paper shadow-[0_8px_18px_rgb(20_45_38/0.4)] ring-[3px] ring-paper">
+            <Home className="size-4" />
           </span>
         </Marker>
       </Map>

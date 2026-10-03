@@ -1,6 +1,6 @@
 # Haven — booking platform
 
-A simplified, Airbnb-style booking site for a curated set of homes. Staff manage listings, calendars and bookings; guests search (map + text), book and pay, manage and review their stays.
+A booking site for a small, curated collection of homes, with its own editorial look: warm paper tones, pine and brass, serif display type and an arched-doorway motif. Staff manage listings, calendars and bookings; guests search (map + text), book and pay, manage and review their stays.
 
 **Stack:** React 19 + Vite + Tailwind CSS 4 · NestJS 11 · PostgreSQL 17 (Prisma) · S3-compatible storage (Cloudflare R2 in production, MinIO locally) · Stripe (payments) · Brevo (email) · MapLibre + OpenFreeMap tiles · Photon (OSM) geocoding · Docker / Docker Compose · npm workspaces.
 

@@ -84,7 +84,7 @@ export function AdminCalendar({ listing }: { listing: AdminListing }) {
             </button>
           </div>
           <div className="flex items-center gap-4 text-xs font-medium text-ink-600">
-            <Legend className="bg-sky-500" label="Booked" />
+            <Legend className="bg-pine-600" label="Booked" />
             <Legend className="bg-amber-400" label="Awaiting payment" />
             <Legend className="bg-[repeating-linear-gradient(135deg,var(--color-ink-300)_0_3px,var(--color-ink-100)_3px_6px)]" label="Blocked" />
             <Legend className="bg-white ring-1 ring-ink-300" label="Available" />
@@ -94,7 +94,7 @@ export function AdminCalendar({ listing }: { listing: AdminListing }) {
         <div className={clsx('grid gap-8', monthsShown === 2 && 'lg:grid-cols-2')} onMouseLeave={() => setHovered(null)}>
           {months.map((month) => (
             <div key={month}>
-              <div className="mb-3 text-[15px] font-semibold">{format(parseISO(month), 'MMMM yyyy')}</div>
+              <div className="display mb-3 text-xl">{format(parseISO(month), 'MMMM')} <span className="font-light text-ink-400">{format(parseISO(month), 'yyyy')}</span></div>
               <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold tracking-wide text-ink-500 uppercase">
                 {weekdays.map((day) => <div key={day} className="pb-1">{day}</div>)}
               </div>
@@ -115,17 +115,17 @@ export function AdminCalendar({ listing }: { listing: AdminListing }) {
                       disabled={past && !hold}
                       className={clsx(
                         'relative flex h-[68px] flex-col items-start rounded-lg p-1.5 text-left text-xs transition',
-                        hold?.kind === 'BOOKING' && hold.booking?.status !== 'PENDING_PAYMENT' && (isActive ? 'bg-sky-600 text-white' : 'bg-sky-500 text-white hover:bg-sky-600'),
+                        hold?.kind === 'BOOKING' && hold.booking?.status !== 'PENDING_PAYMENT' && (isActive ? 'bg-pine-700 text-paper' : 'bg-pine-600 text-paper hover:bg-pine-700'),
                         hold?.kind === 'BOOKING' && hold.booking?.status === 'PENDING_PAYMENT' && (isActive ? 'bg-amber-500 text-white' : 'bg-amber-400 text-amber-950 hover:bg-amber-500'),
                         hold?.kind === 'BLOCK' && 'bg-[repeating-linear-gradient(135deg,var(--color-ink-200)_0_4px,var(--color-ink-50)_4px_8px)] text-ink-700 hover:brightness-95',
                         hold?.kind === 'BLOCK' && isActive && 'ring-2 ring-ink-900',
                         !hold && !past && 'bg-white ring-1 ring-ink-200 hover:ring-ink-900',
                         !hold && past && 'cursor-not-allowed bg-ink-50 text-ink-300',
-                        inSelection && !hold && 'bg-ink-900! text-white ring-ink-900',
+                        inSelection && !hold && 'bg-ink-900! text-paper ring-ink-900',
                         hold && past && 'opacity-60',
                       )}
                     >
-                      <span className={clsx('font-semibold', day === today && !hold && !inSelection && 'flex size-5 items-center justify-center rounded-full bg-brand-600 text-white')}>{Number(day.slice(8))}</span>
+                      <span className={clsx('font-semibold', day === today && !hold && !inSelection && 'flex size-5 items-center justify-center rounded-sm bg-brass text-white')}>{Number(day.slice(8))}</span>
                       {startsHere && (
                         <span className="mt-auto w-full truncate text-[11px] leading-tight font-semibold">
                           {hold.kind === 'BOOKING' ? hold.booking?.guestName : hold.note || 'Blocked'}
@@ -226,7 +226,7 @@ function SelectionPanel({ listing, first, last, free, onClear, onDone }: { listi
       <div className="text-sm text-ink-500">to checkout {longDate(end)}</div>
 
       {!free ? (
-        <p className="mt-4 rounded-xl bg-brand-50 p-3 text-sm text-brand-800">This range overlaps an existing booking or block. Choose only open nights.</p>
+        <p className="mt-4 rounded-xl bg-danger-50 p-3 text-sm text-danger-800">This range overlaps an existing booking or block. Choose only open nights.</p>
       ) : (
         <>
           <div className="mt-5 grid grid-cols-2 gap-1 rounded-xl bg-ink-100 p-1">
@@ -303,7 +303,7 @@ function HoldPanel({ hold, timeZone, onClose, onChanged }: { hold: CalendarHold;
   return (
     <Card className="animate-pop-in p-6">
       <div className="flex items-start justify-between">
-        <div className={clsx('flex size-11 items-center justify-center rounded-xl', hold.kind === 'BOOKING' ? 'bg-sky-100 text-sky-700' : 'bg-ink-100 text-ink-700')}>
+        <div className={clsx('flex size-11 items-center justify-center rounded-xl', hold.kind === 'BOOKING' ? 'bg-pine-50 text-pine-700' : 'bg-ink-100 text-ink-700')}>
           {hold.kind === 'BOOKING' ? <UserRound className="size-5" /> : <Ban className="size-5" />}
         </div>
         <button type="button" onClick={onClose} className="text-sm font-semibold text-ink-500 hover:text-ink-900">Close</button>

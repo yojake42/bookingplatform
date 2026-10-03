@@ -122,8 +122,8 @@ export function LocationEditor({ value, onChange }: { value: LocationValue; onCh
           <NavigationControl position="top-right" showCompass={false} />
           {circle && value.locationPrecision === 'APPROXIMATE' && (
             <Source id="preview-area" type="geojson" data={circle}>
-              <Layer id="preview-fill" type="fill" paint={{ 'fill-color': '#e11d48', 'fill-opacity': 0.12 }} />
-              <Layer id="preview-line" type="line" paint={{ 'line-color': '#e11d48', 'line-width': 1.5, 'line-dasharray': [2, 2] }} />
+              <Layer id="preview-fill" type="fill" paint={{ 'fill-color': '#2c5a4a', 'fill-opacity': 0.12 }} />
+              <Layer id="preview-line" type="line" paint={{ 'line-color': '#224a3d', 'line-width': 1.5, 'line-dasharray': [2, 2] }} />
             </Source>
           )}
           {point && (

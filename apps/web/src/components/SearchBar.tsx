@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Building2, MapPin, Search, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, Compass, MapPin, Search, Users, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { dateRangeLabel, plural } from '../lib/format';
 import { useClickOutside, useDebounced, useMediaQuery } from '../lib/hooks';
@@ -40,7 +40,7 @@ function useSuggestions(text: string) {
     ...(destinations.data ?? []).map((destination) => ({
       kind: 'destination' as const,
       label: destination.label,
-      detail: plural(destination.count, 'home'),
+      detail: `${plural(destination.count, 'home')} in the collection`,
       bounds: destination.bounds ? padBounds(destination.bounds, 0.15) : null,
     })),
     ...(places.data ?? [])
@@ -49,44 +49,44 @@ function useSuggestions(text: string) {
       .map((place) => ({
         kind: 'place' as const,
         label: place.label,
-        detail: place.type ? place.type.charAt(0).toUpperCase() + place.type.slice(1).replace(/_/g, ' ') : 'Place',
+        detail: place.type ? `Search near this ${place.type.replace(/_/g, ' ')}` : 'Search near this place',
         bounds: place.bounds
           ? padBounds(place.bounds, 0.12)
           : { north: place.latitude + 0.25, south: place.latitude - 0.25, east: place.longitude + 0.3, west: place.longitude - 0.3 },
       })),
   ];
-  return { suggestions, loading: destinations.isFetching || places.isFetching, term };
+  return { suggestions, term };
 }
 
 function WhereSuggestions({ text, onPick }: { text: string; onPick: (suggestion: Suggestion) => void }) {
   const { suggestions, term } = useSuggestions(text);
   return (
-    <div className="py-2">
-      <div className="px-4 pt-2 pb-2 text-xs font-semibold tracking-wide text-ink-500 uppercase">{term ? 'Suggestions' : 'Popular destinations'}</div>
+    <div className="py-3">
+      <div className="eyebrow px-5 pb-2">{term ? 'Suggestions' : 'Where our homes are'}</div>
       {term && (
-        <SuggestionRow icon={<Search className="size-5" />} title={`Search "${term}"`} detail="Match titles, cities and regions" onClick={() => onPick({ kind: 'destination', label: term, detail: '', bounds: null })} />
+        <SuggestionRow icon={<Search className="size-4" />} title={`Search for “${term}”`} detail="Matches home names, towns and regions" onClick={() => onPick({ kind: 'destination', label: term, detail: '', bounds: null })} />
       )}
       {suggestions.map((suggestion) => (
         <SuggestionRow
           key={`${suggestion.kind}:${suggestion.label}`}
-          icon={suggestion.kind === 'destination' ? <Building2 className="size-5" /> : <MapPin className="size-5" />}
+          icon={suggestion.kind === 'destination' ? <Compass className="size-4" /> : <MapPin className="size-4" />}
           title={suggestion.label}
           detail={suggestion.detail}
           onClick={() => onPick(suggestion)}
         />
       ))}
-      {!term && !suggestions.length && <p className="px-4 py-3 text-sm text-ink-500">Start typing a city, region or address.</p>}
+      {!term && !suggestions.length && <p className="px-5 py-3 text-sm text-ink-500">Start typing a town, region or address.</p>}
     </div>
   );
 }
 
 function SuggestionRow({ icon, title, detail, onClick }: { icon: ReactNode; title: string; detail: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full items-center gap-4 px-4 py-2.5 text-left transition hover:bg-ink-50">
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-ink-100 text-ink-700">{icon}</span>
+    <button type="button" onClick={onClick} className="group flex w-full items-center gap-3.5 px-5 py-2.5 text-left transition hover:bg-sand">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-ink-200 bg-white text-pine-700 transition group-hover:border-pine-700">{icon}</span>
       <span className="min-w-0">
-        <span className="block truncate text-[15px] text-ink-900">{title}</span>
-        {detail && <span className="block text-sm text-ink-500">{detail}</span>}
+        <span className="block truncate text-[15px] font-semibold text-ink-900">{title}</span>
+        {detail && <span className="block text-[13px] text-ink-500">{detail}</span>}
       </span>
     </button>
   );
@@ -96,25 +96,20 @@ function GuestsPanel({ guests, onChange }: { guests: number; onChange: (value: n
   return (
     <div className="px-6 py-3">
       <Counter label="Guests" description="Adults and children" value={guests} min={0} max={16} zeroLabel="0" onChange={onChange} />
-      <p className="pb-2 text-sm text-ink-500">Infants under 2 don't count toward the guest limit.</p>
+      <p className="pb-2 text-[13px] text-ink-500">Infants under 2 stay free and don't count toward the limit.</p>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Bar
+// Shared state
 // ---------------------------------------------------------------------------
 
-export function SearchBar({ initial, onSearch, autoFocus }: { initial: SearchSubmit; onSearch: (value: SearchSubmit) => void; autoFocus?: boolean }) {
-  const desktop = useMediaQuery('(min-width: 768px)');
-  const [panel, setPanel] = useState<Panel>(null);
+function useSearchDraft(initial: SearchSubmit, onSearch: (value: SearchSubmit) => void) {
   const [text, setText] = useState(initial.place || initial.q);
   const [where, setWhere] = useState<Pick<SearchSubmit, 'q' | 'place' | 'bounds'>>({ q: initial.q, place: initial.place, bounds: initial.bounds });
   const [dates, setDates] = useState({ checkIn: initial.checkIn, checkOut: initial.checkOut });
   const [guests, setGuests] = useState(initial.guests);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const container = useClickOutside<HTMLFormElement>(() => setPanel(null), panel !== null);
-  const input = useRef<HTMLInputElement>(null);
 
   // Stay in sync when the URL changes underneath us (back button, map search).
   useEffect(() => {
@@ -124,212 +119,259 @@ export function SearchBar({ initial, onSearch, autoFocus }: { initial: SearchSub
     setGuests(initial.guests);
   }, [initial.q, initial.place, initial.bounds, initial.checkIn, initial.checkOut, initial.guests]);
 
-  useEffect(() => {
-    if (autoFocus && desktop) {
-      setPanel('where');
-      input.current?.focus();
-    }
-  }, [autoFocus, desktop]);
-
   const submit = (override?: Partial<SearchSubmit>) => {
     const typed = text.trim();
     const whereValue = typed === (where.place || where.q) ? where : { q: typed, place: '', bounds: null };
-    setPanel(null);
-    setMobileOpen(false);
     onSearch({ ...whereValue, ...dates, guests, ...override });
   };
 
   const pick = (suggestion: Suggestion) => {
     setText(suggestion.label);
-    const next = suggestion.bounds
-      ? { q: '', place: suggestion.label, bounds: suggestion.bounds }
-      : { q: suggestion.label, place: '', bounds: null };
+    const next = suggestion.bounds ? { q: '', place: suggestion.label, bounds: suggestion.bounds } : { q: suggestion.label, place: '', bounds: null };
     setWhere(next);
-    if (desktop) setPanel('dates');
-    else onSearch({ ...next, ...dates, guests });
+    return next;
   };
 
-  const datesLabel = dates.checkIn && dates.checkOut ? dateRangeLabel(dates.checkIn, dates.checkOut) : null;
+  const clearWhere = () => {
+    setText('');
+    setWhere({ q: '', place: '', bounds: null });
+  };
+
+  return { text, setText, where, dates, setDates, guests, setGuests, submit, pick, clearWhere };
+}
+
+type Draft = ReturnType<typeof useSearchDraft>;
+
+function MobileSearchSheet({ draft, open, onClose }: { draft: Draft; open: boolean; onClose: () => void }) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Find a stay"
+      size="full"
+      bodyClassName="bg-sand p-4 space-y-3"
+      footer={
+        <div className="flex items-center justify-between">
+          <button type="button" className="text-sm font-bold underline underline-offset-4" onClick={() => { draft.clearWhere(); draft.setDates({ checkIn: null, checkOut: null }); draft.setGuests(0); }}>
+            Clear all
+          </button>
+          <Button variant="brand" size="lg" icon={<Search className="size-4" />} onClick={() => { draft.submit(); onClose(); }}>
+            Search
+          </Button>
+        </div>
+      }
+    >
+      <div className="rounded-xl bg-white p-4 ring-1 ring-ink-200">
+        <h3 className="display mb-3 text-2xl">Where?</h3>
+        <div className="relative">
+          <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-500" />
+          <input value={draft.text} onChange={(event) => draft.setText(event.target.value)} placeholder="Town, region or address" className="field pl-10" />
+        </div>
+        <WhereSuggestions text={draft.text} onPick={(suggestion) => draft.pick(suggestion)} />
+      </div>
+      <div className="rounded-xl bg-white p-4 ring-1 ring-ink-200">
+        <h3 className="display mb-3 text-2xl">When?</h3>
+        <DateRangeCalendar months={1} checkIn={draft.dates.checkIn} checkOut={draft.dates.checkOut} onChange={draft.setDates} />
+      </div>
+      <div className="rounded-xl bg-white ring-1 ring-ink-200">
+        <h3 className="display px-4 pt-4 text-2xl">Who?</h3>
+        <GuestsPanel guests={draft.guests} onChange={draft.setGuests} />
+      </div>
+    </Modal>
+  );
+}
+
+function Popover({ panel, align, children }: { panel: Panel; align: 'left' | 'center' | 'right'; children: ReactNode }) {
+  return (
+    <div
+      className={clsx(
+        'absolute top-[calc(100%+10px)] z-40 animate-pop-in overflow-hidden rounded-xl bg-paper shadow-float ring-1 ring-ink-200',
+        align === 'left' && 'left-0',
+        align === 'center' && 'left-1/2 -translate-x-1/2',
+        align === 'right' && 'right-0',
+        panel === 'where' && 'max-h-[440px] w-[420px] overflow-y-auto',
+        panel === 'dates' && 'w-[760px] p-7',
+        panel === 'guests' && 'w-[360px]',
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DatesPanel({ draft, onDone }: { draft: Draft; onDone: () => void }) {
+  return (
+    <>
+      <DateRangeCalendar
+        checkIn={draft.dates.checkIn}
+        checkOut={draft.dates.checkOut}
+        onChange={(value) => {
+          draft.setDates(value);
+          if (value.checkIn && value.checkOut) onDone();
+        }}
+      />
+      <div className="mt-4 flex justify-end">
+        <button type="button" className="text-[13px] font-bold underline underline-offset-4" onClick={() => draft.setDates({ checkIn: null, checkOut: null })}>
+          Clear dates
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Control strip (the stays page)
+// ---------------------------------------------------------------------------
+
+export function SearchBar({ initial, onSearch }: { initial: SearchSubmit; onSearch: (value: SearchSubmit) => void }) {
+  const desktop = useMediaQuery('(min-width: 900px)');
+  const draft = useSearchDraft(initial, onSearch);
+  const [panel, setPanel] = useState<Panel>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const container = useClickOutside<HTMLFormElement>(() => setPanel(null), panel !== null);
+  const input = useRef<HTMLInputElement>(null);
+  const datesLabel = draft.dates.checkIn && draft.dates.checkOut ? dateRangeLabel(draft.dates.checkIn, draft.dates.checkOut) : null;
 
   if (!desktop) {
     return (
       <>
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="flex w-full items-center gap-3 rounded-full bg-white px-4 py-2.5 text-left shadow-[0_3px_12px_rgb(0_0_0/0.1)] ring-1 ring-ink-200/70"
-        >
-          <Search className="size-5 shrink-0" />
+        <button type="button" onClick={() => setMobileOpen(true)} className="flex w-full items-center gap-3 rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-left">
+          <Search className="size-4 shrink-0 text-pine-700" />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold">{text || 'Where to?'}</span>
-            <span className="block truncate text-xs text-ink-500">
-              {datesLabel ?? 'Any week'} · {guests ? plural(guests, 'guest') : 'Add guests'}
-            </span>
+            <span className="block truncate text-sm font-bold">{draft.text || 'Anywhere in the collection'}</span>
+            <span className="block truncate text-xs text-ink-500">{datesLabel ?? 'Any dates'} · {draft.guests ? plural(draft.guests, 'guest') : 'Any guests'}</span>
           </span>
         </button>
-        <Modal open={mobileOpen} onClose={() => setMobileOpen(false)} title="Search" size="full" bodyClassName="bg-ink-50 p-4 space-y-3"
-          footer={
-            <div className="flex items-center justify-between">
-              <button type="button" className="text-[15px] font-semibold underline" onClick={() => { setText(''); setWhere({ q: '', place: '', bounds: null }); setDates({ checkIn: null, checkOut: null }); setGuests(0); }}>
-                Clear all
-              </button>
-              <Button variant="brand" size="lg" icon={<Search className="size-5" />} onClick={() => submit()}>
-                Search
-              </Button>
-            </div>
-          }
-        >
-          <div className="rounded-3xl bg-white p-4 shadow-card">
-            <h3 className="mb-3 text-xl font-bold">Where to?</h3>
-            <div className="relative">
-              <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-500" />
-              <input value={text} onChange={(event) => setText(event.target.value)} placeholder="Search destinations" className="field pl-10" />
-            </div>
-            <WhereSuggestions text={text} onPick={pick} />
-          </div>
-          <div className="rounded-3xl bg-white p-4 shadow-card">
-            <h3 className="mb-3 text-xl font-bold">When?</h3>
-            <DateRangeCalendar months={1} checkIn={dates.checkIn} checkOut={dates.checkOut} onChange={setDates} />
-          </div>
-          <div className="rounded-3xl bg-white shadow-card">
-            <h3 className="px-4 pt-4 text-xl font-bold">Who?</h3>
-            <GuestsPanel guests={guests} onChange={setGuests} />
-          </div>
-        </Modal>
+        <MobileSearchSheet draft={draft} open={mobileOpen} onClose={() => setMobileOpen(false)} />
       </>
     );
   }
 
-  const segment = (name: Exclude<Panel, null>) =>
-    clsx(
-      'relative flex h-full flex-col justify-center rounded-full px-6 text-left transition-colors duration-150',
-      panel === name ? 'bg-white shadow-[0_6px_20px_rgb(0_0_0/0.12)]' : panel ? 'hover:bg-ink-200/60' : 'hover:bg-ink-100',
-    );
+  const cell = (name: Exclude<Panel, null>) =>
+    clsx('relative flex h-full min-w-0 flex-col justify-center px-4 text-left transition-colors', panel === name ? 'bg-sand' : 'hover:bg-ink-50');
 
   return (
     <form
       ref={container}
       onSubmit={(event) => {
         event.preventDefault();
-        submit();
+        setPanel(null);
+        draft.submit();
       }}
-      className={clsx(
-        'relative mx-auto flex h-16 w-full max-w-[850px] items-center rounded-full ring-1 ring-ink-200 transition-colors duration-200',
-        panel ? 'bg-ink-100' : 'bg-white shadow-[0_3px_12px_rgb(0_0_0/0.08)]',
-      )}
+      className="relative flex h-[52px] w-full max-w-[760px] items-stretch rounded-lg border border-ink-300 bg-white"
     >
-      <div className={clsx(segment('where'), 'min-w-0 flex-[1.3] cursor-text')} onClick={() => { setPanel('where'); input.current?.focus(); }}>
-        <span className="text-xs font-semibold">Where</span>
-        <div className="flex items-center">
+      <div className={clsx(cell('where'), 'flex-[1.4] cursor-text rounded-l-lg')} onClick={() => { setPanel('where'); input.current?.focus(); }}>
+        <span className="eyebrow text-[10px]!">Destination</span>
+        <div className="flex items-center gap-1">
           <input
             ref={input}
-            value={text}
-            onChange={(event) => {
-              setText(event.target.value);
-              setPanel('where');
-            }}
+            value={draft.text}
+            onChange={(event) => { draft.setText(event.target.value); setPanel('where'); }}
             onFocus={() => setPanel('where')}
-            placeholder="Search destinations"
-            className="w-full min-w-0 bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-500"
+            placeholder="Anywhere in the collection"
+            className="w-full min-w-0 bg-transparent text-sm font-semibold text-ink-900 outline-none placeholder:font-medium placeholder:text-ink-400"
           />
-          {text && panel === 'where' && (
-            <button
-              type="button"
-              aria-label="Clear"
-              onClick={(event) => {
-                event.stopPropagation();
-                setText('');
-                setWhere({ q: '', place: '', bounds: null });
-                input.current?.focus();
-              }}
-              className="ml-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-ink-200 text-ink-700 hover:bg-ink-300"
-            >
+          {draft.text && (
+            <button type="button" aria-label="Clear destination" onClick={(event) => { event.stopPropagation(); draft.clearWhere(); input.current?.focus(); }} className="shrink-0 text-ink-400 hover:text-ink-900">
               <X className="size-3.5" />
             </button>
           )}
         </div>
       </div>
-      <span className={clsx('h-8 w-px bg-ink-200', panel && 'opacity-0')} />
-      <button type="button" className={clsx(segment('dates'), 'flex-1')} onClick={() => setPanel('dates')}>
-        <span className="text-xs font-semibold">Check in</span>
-        <span className={clsx('truncate text-sm', dates.checkIn ? 'text-ink-900' : 'text-ink-500')}>{dates.checkIn ? dateRangeLabel(dates.checkIn) : 'Add dates'}</span>
+      <span className="w-px bg-ink-200" />
+      <button type="button" className={clsx(cell('dates'), 'flex-1')} onClick={() => setPanel('dates')}>
+        <span className="eyebrow text-[10px]!">Dates</span>
+        <span className={clsx('truncate text-sm', datesLabel ? 'font-semibold text-ink-900' : 'text-ink-400')}>{datesLabel ?? 'Add dates'}</span>
       </button>
-      <span className={clsx('h-8 w-px bg-ink-200', panel && 'opacity-0')} />
-      <button type="button" className={clsx(segment('dates'), 'flex-1')} onClick={() => setPanel('dates')}>
-        <span className="text-xs font-semibold">Check out</span>
-        <span className={clsx('truncate text-sm', dates.checkOut ? 'text-ink-900' : 'text-ink-500')}>{dates.checkOut ? dateRangeLabel(dates.checkOut) : 'Add dates'}</span>
+      <span className="w-px bg-ink-200" />
+      <button type="button" className={clsx(cell('guests'), 'flex-[0.8]')} onClick={() => setPanel('guests')}>
+        <span className="eyebrow text-[10px]!">Guests</span>
+        <span className={clsx('truncate text-sm', draft.guests ? 'font-semibold text-ink-900' : 'text-ink-400')}>{draft.guests ? plural(draft.guests, 'guest') : 'Add guests'}</span>
       </button>
-      <span className={clsx('h-8 w-px bg-ink-200', panel && 'opacity-0')} />
-      <div className={clsx(segment('guests'), 'flex-[1.2] flex-row items-center justify-between gap-2 pr-2')} onClick={() => setPanel('guests')} role="button" tabIndex={0}>
-        <span className="flex min-w-0 flex-col">
-          <span className="text-xs font-semibold">Who</span>
-          <span className={clsx('truncate text-sm', guests ? 'text-ink-900' : 'text-ink-500')}>{guests ? plural(guests, 'guest') : 'Add guests'}</span>
-        </span>
-        <button
-          type="submit"
-          onClick={(event) => event.stopPropagation()}
-          className={clsx(
-            'flex h-12 items-center justify-center gap-2 rounded-full bg-brand-600 font-semibold text-white transition-all duration-200 hover:bg-brand-700 active:scale-95',
-            panel ? 'px-5' : 'w-12',
-          )}
-          aria-label="Search"
-        >
-          <Search className="size-[18px] stroke-[2.5]" />
-          {panel && <span>Search</span>}
-        </button>
-      </div>
+      <button type="submit" aria-label="Search" className="m-1 flex items-center gap-2 rounded-md bg-pine-700 px-4 text-[13px] font-bold text-paper transition hover:bg-pine-800">
+        Search <ArrowRight className="size-4" />
+      </button>
 
-      {panel && (
-        <div
-          className={clsx(
-            'absolute top-[calc(100%+12px)] z-40 animate-pop-in overflow-hidden rounded-[2rem] bg-white shadow-float ring-1 ring-black/5',
-            panel === 'where' && 'left-0 w-[440px] max-h-[460px] overflow-y-auto',
-            panel === 'dates' && 'left-1/2 w-[780px] -translate-x-1/2 p-8',
-            panel === 'guests' && 'right-0 w-[380px]',
-          )}
-        >
-          {panel === 'where' && <WhereSuggestions text={text} onPick={pick} />}
-          {panel === 'dates' && (
-            <>
-              <DateRangeCalendar
-                checkIn={dates.checkIn}
-                checkOut={dates.checkOut}
-                onChange={(value) => {
-                  setDates(value);
-                  if (value.checkIn && value.checkOut) setPanel('guests');
-                }}
-              />
-              <div className="mt-4 flex justify-end">
-                <button type="button" className="text-sm font-semibold underline" onClick={() => setDates({ checkIn: null, checkOut: null })}>
-                  Clear dates
-                </button>
-              </div>
-            </>
-          )}
-          {panel === 'guests' && <GuestsPanel guests={guests} onChange={setGuests} />}
-        </div>
-      )}
+      {panel === 'where' && <Popover panel="where" align="left"><WhereSuggestions text={draft.text} onPick={(suggestion) => { draft.pick(suggestion); setPanel('dates'); }} /></Popover>}
+      {panel === 'dates' && <Popover panel="dates" align="center"><DatesPanel draft={draft} onDone={() => setPanel('guests')} /></Popover>}
+      {panel === 'guests' && <Popover panel="guests" align="right"><GuestsPanel guests={draft.guests} onChange={draft.setGuests} /></Popover>}
     </form>
   );
 }
 
-/** Compact pill used on non-search pages; clicking jumps to the search page. */
-export function CompactSearchPill({ onClick }: { onClick: () => void }) {
+// ---------------------------------------------------------------------------
+// Sentence search (homepage hero)
+// ---------------------------------------------------------------------------
+
+function Token({ active, filled, onClick, children, icon }: { active: boolean; filled: boolean; onClick: () => void; children: ReactNode; icon: ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-3 rounded-full py-2 pr-2 pl-5 text-sm font-semibold shadow-[0_2px_10px_rgb(0_0_0/0.08)] ring-1 ring-ink-200 transition hover:shadow-[0_4px_16px_rgb(0_0_0/0.12)]"
+      className={clsx(
+        'group inline-flex items-baseline gap-2 border-b-2 border-dashed px-0.5 transition',
+        active ? 'border-pine-700 text-pine-800' : filled ? 'border-brass text-ink-900 hover:border-pine-700' : 'border-ink-300 text-ink-400 hover:border-pine-700 hover:text-ink-700',
+      )}
     >
-      <span>Anywhere</span>
-      <span className="h-5 w-px bg-ink-200" />
-      <span>Any week</span>
-      <span className="h-5 w-px bg-ink-200" />
-      <span className="font-normal text-ink-500">Add guests</span>
-      <span className="flex size-8 items-center justify-center rounded-full bg-brand-600 text-white">
-        <Search className="size-3.5 stroke-[3]" />
-      </span>
+      <span className="hidden translate-y-[-0.1em] self-center text-brass sm:inline">{icon}</span>
+      {children}
     </button>
   );
 }
 
+export function SentenceSearch({ onSearch }: { onSearch: (value: SearchSubmit) => void }) {
+  const desktop = useMediaQuery('(min-width: 900px)');
+  const draft = useSearchDraft({ q: '', place: '', bounds: null, checkIn: null, checkOut: null, guests: 0 }, onSearch);
+  const [panel, setPanel] = useState<Panel>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const container = useClickOutside<HTMLDivElement>(() => setPanel(null), panel !== null);
+  const input = useRef<HTMLInputElement>(null);
+  const datesLabel = draft.dates.checkIn && draft.dates.checkOut ? dateRangeLabel(draft.dates.checkIn, draft.dates.checkOut) : null;
+
+  useEffect(() => {
+    if (panel === 'where') input.current?.focus();
+  }, [panel]);
+
+  const open = (name: Exclude<Panel, null>) => (desktop ? setPanel(panel === name ? null : name) : setMobileOpen(true));
+
+  return (
+    <div ref={container} className="relative">
+      <p className="display text-[26px] leading-[1.6] font-light text-ink-700 sm:text-[34px]">
+        I&apos;d like to stay{' '}
+        <Token active={panel === 'where'} filled={Boolean(draft.text)} onClick={() => open('where')} icon={<MapPin className="size-5" />}>
+          {draft.text ? `in ${draft.text.split(',')[0]}` : 'anywhere'}
+        </Token>
+        ,{' '}
+        <Token active={panel === 'dates'} filled={Boolean(datesLabel)} onClick={() => open('dates')} icon={<CalendarDays className="size-5" />}>
+          {datesLabel ?? 'any time'}
+        </Token>
+        , for{' '}
+        <Token active={panel === 'guests'} filled={draft.guests > 0} onClick={() => open('guests')} icon={<Users className="size-5" />}>
+          {draft.guests ? plural(draft.guests, 'guest') : 'any number of guests'}
+        </Token>
+        .
+      </p>
+      <div className="mt-8 flex flex-wrap items-center gap-4">
+        <Button variant="brand" size="lg" icon={<Search className="size-4" />} onClick={() => { setPanel(null); draft.submit(); }}>
+          Search the collection
+        </Button>
+        <span className="text-[13px] text-ink-500">Dates and guests are optional.</span>
+      </div>
+
+      {panel === 'where' && (
+        <Popover panel="where" align="left">
+          <div className="border-b border-ink-200 p-3">
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-500" />
+              <input ref={input} value={draft.text} onChange={(event) => draft.setText(event.target.value)} placeholder="Town, region or address" className="field pl-10" />
+            </div>
+          </div>
+          <WhereSuggestions text={draft.text} onPick={(suggestion) => { draft.pick(suggestion); setPanel('dates'); }} />
+        </Popover>
+      )}
+      {panel === 'dates' && <Popover panel="dates" align="left"><DatesPanel draft={draft} onDone={() => setPanel('guests')} /></Popover>}
+      {panel === 'guests' && <Popover panel="guests" align="left"><GuestsPanel guests={draft.guests} onChange={draft.setGuests} /></Popover>}
+      <MobileSearchSheet draft={draft} open={mobileOpen} onClose={() => setMobileOpen(false)} />
+    </div>
+  );
+}

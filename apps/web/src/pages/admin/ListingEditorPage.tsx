@@ -141,7 +141,7 @@ export function ListingEditorPage() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="truncate text-2xl font-bold tracking-tight">{data.title}</h1>
+                  <h1 className="display truncate text-[30px] leading-tight">{data.title}</h1>
                   <Badge tone={statusTone[data.status]} className="capitalize">{data.status.toLowerCase()}</Badge>
                 </div>
                 <p className="text-sm text-ink-500">
@@ -382,7 +382,7 @@ function MoreMenu({ archived, onArchive, onDelete }: { archived: boolean; onArch
           <button type="button" className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left hover:bg-ink-50" onClick={() => { setOpen(false); onArchive(); }}>
             <Archive className="size-4" /> {archived ? 'Restore to draft' : 'Archive listing'}
           </button>
-          <button type="button" className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-brand-700 hover:bg-ink-50" onClick={() => { setOpen(false); onDelete(); }}>
+          <button type="button" className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-danger-700 hover:bg-ink-50" onClick={() => { setOpen(false); onDelete(); }}>
             <Trash2 className="size-4" /> Delete listing
           </button>
         </div>

@@ -1,0 +1,31 @@
+{
+  "name": "bookingplatform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "docker compose up",
+    "dev:build": "docker compose up --build",
+    "down": "docker compose down",
+    "reset": "docker compose down -v",
+    "prod:up": "docker compose -f docker-compose.prod.yml --env-file .env.prod up --build -d",
+    "prod:down": "docker compose -f docker-compose.prod.yml --env-file .env.prod down",
+    "build": "npm run build -w apps/api && npm run build -w apps/web",
+    "test": "npm run test -w apps/api && npm run test -w apps/web",
+    "typecheck": "npm run typecheck -w apps/api && npm run typecheck -w apps/web",
+    "test:double-booking": "node scripts/double-booking-race.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "argon2@0.45.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@6.19.3": true
+  }
+}

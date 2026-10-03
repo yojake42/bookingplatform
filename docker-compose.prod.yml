@@ -1,0 +1,128 @@
+# Production-shaped stack. The API runs as multiple stateless replicas behind nginx:
+# sessions, rate limits, booking constraints and job locks live in Postgres; media lives in object storage.
+#
+# Locally this uses MinIO; for Cloudflare R2 set STORAGE_* in .env.prod and drop the minio services.
+#   npm run prod:up   (reads .env.prod — see .env.prod.example)
+name: bookingplatform-prod
+
+x-api-env: &api-env
+  NODE_ENV: production
+  PORT: 3000
+  DATABASE_URL: ${DATABASE_URL}
+  WEB_ORIGIN: ${WEB_ORIGIN}
+  SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-bp_session}
+  SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-336}
+  COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  TRUST_PROXY: ${TRUST_PROXY:-true}
+  SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+  SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+  SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Site Admin}
+  SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+  STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+  STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-}
+  STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-}
+  STORAGE_BUCKET: ${STORAGE_BUCKET}
+  STORAGE_REGION: ${STORAGE_REGION:-auto}
+  STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+  STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+  STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE:-false}
+  GEOCODER_URL: ${GEOCODER_URL:-https://photon.komoot.io/api}
+  GEOCODER_USER_AGENT: ${GEOCODER_USER_AGENT:-bookingplatform/0.1}
+  BOOKING_RATE_LIMIT_PER_HOUR: ${BOOKING_RATE_LIMIT_PER_HOUR:-30}
+  PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:-}
+  PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-stripe}
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+  PAYMENT_HOLD_MINUTES: ${PAYMENT_HOLD_MINUTES:-30}
+  ALLOW_FAKE_PAYMENTS: ${ALLOW_FAKE_PAYMENTS:-false}
+  EMAIL_PROVIDER: ${EMAIL_PROVIDER:-log}
+  BREVO_API_KEY: ${BREVO_API_KEY:-}
+  EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-stays@example.com}
+  EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Haven}
+  EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
+  STAFF_NOTIFICATION_EMAILS: ${STAFF_NOTIFICATION_EMAILS:-}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_API_HOST_PORT:-9200}:9000"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
+      mc mb --ignore-existing local/${STORAGE_BUCKET} &&
+      mc anonymous set download local/${STORAGE_BUCKET}"
+    restart: "no"
+
+  # One-shot job: applies migrations and seeds before any API replica starts serving,
+  # so replicas never race each other on schema changes.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      <<: *api-env
+    command: ["sh", "-c", "npx prisma migrate deploy --schema apps/api/prisma/schema.prisma && node apps/api/dist/prisma/seed.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      <<: *api-env
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "${WEB_HOST_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:

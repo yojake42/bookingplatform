@@ -1,0 +1,410 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Staff accounts
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  ADMIN // manages listings and staff accounts
+  MANAGER // manages listings, calendars and bookings
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole @default(MANAGER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions        Session[]
+  hostedListings  Listing[]              @relation("ListingHost")
+  createdHolds    CalendarHold[]
+  createdBookings Booking[]              @relation("BookingCreatedBy")
+  legalVersions   LegalDocumentVersion[]
+}
+
+/// Server-side sessions keep every API replica stateless: any replica can validate any cookie.
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  tokenHash  String   @unique
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Fixed-window counters shared by all replicas (login attempts, public lookups, geocoding).
+model RateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@index([windowStart])
+}
+
+// ---------------------------------------------------------------------------
+// Listings
+// ---------------------------------------------------------------------------
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LocationPrecision {
+  EXACT // pin shown at the real coordinates, street address visible
+  APPROXIMATE // public coordinates are offset and shown as an area circle
+}
+
+enum CancellationPolicy {
+  FLEXIBLE
+  MODERATE
+  STRICT
+}
+
+model Listing {
+  id                  String             @id @default(uuid()) @db.Uuid
+  status              ListingStatus      @default(DRAFT)
+  title               String
+  summary             String             @default("")
+  description         String             @default("")
+  propertyType        String             @default("House")
+  maxGuests           Int                @default(2)
+  bedrooms            Int                @default(1)
+  beds                Int                @default(1)
+  bathrooms           Float              @default(1)
+  amenities           String[]           @default([])
+  /// Prices are stored in minor units (cents).
+  nightlyPrice        Int                @default(15000)
+  cleaningFee         Int                @default(0)
+  currency            String             @default("USD")
+  minNights           Int                @default(1)
+  maxNights           Int                @default(365)
+  checkInTime         String             @default("15:00")
+  checkOutTime        String             @default("11:00")
+  houseRules          String             @default("")
+  cancellationPolicy  CancellationPolicy @default(FLEXIBLE)
+  addressLine1        String             @default("")
+  addressLine2        String             @default("")
+  city                String             @default("")
+  region              String             @default("")
+  postalCode          String             @default("")
+  country             String             @default("")
+  latitude            Float?
+  longitude           Float?
+  locationPrecision   LocationPrecision  @default(APPROXIMATE)
+  locationDescription String             @default("")
+  /// IANA zone of the home. "Today", check-in/out moments, refunds and reminders all use it.
+  timeZone            String             @default("UTC")
+  hostId              String?            @db.Uuid
+  host                User?              @relation("ListingHost", fields: [hostId], references: [id], onDelete: SetNull)
+  ratingAverage       Float?
+  ratingCount         Int                @default(0)
+  publishedAt         DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  media    ListingMedia[]
+  holds    CalendarHold[]
+  bookings Booking[]
+  reviews  Review[]
+
+  @@index([status])
+  @@index([latitude, longitude])
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+}
+
+enum MediaStatus {
+  PENDING // presigned upload issued, object not yet confirmed
+  READY
+}
+
+model ListingMedia {
+  id          String      @id @default(uuid()) @db.Uuid
+  listingId   String      @db.Uuid
+  listing     Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  kind        MediaKind
+  status      MediaStatus @default(PENDING)
+  storageKey  String
+  thumbKey    String?
+  largeKey    String?
+  contentType String
+  fileName    String
+  sizeBytes   Int
+  width       Int?
+  height      Int?
+  caption     String      @default("")
+  position    Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  @@index([listingId, position])
+  @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Availability
+// ---------------------------------------------------------------------------
+
+enum HoldKind {
+  BOOKING
+  BLOCK
+}
+
+/// Every night that is unavailable is covered by exactly one hold. A Postgres exclusion constraint
+/// (see the init migration) makes overlapping holds for the same listing impossible, regardless of
+/// how many API replicas are racing. Confirmed bookings own a hold; cancelling deletes it.
+/// startDate is the first night; endDate is the checkout day (exclusive).
+model CalendarHold {
+  id          String   @id @default(uuid()) @db.Uuid
+  listingId   String   @db.Uuid
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  kind        HoldKind
+  startDate   DateTime @db.Date
+  endDate     DateTime @db.Date
+  note        String   @default("")
+  bookingId   String?  @unique @db.Uuid
+  booking     Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  createdById String?  @db.Uuid
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([listingId, startDate, endDate])
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT // dates held while the guest pays; released if payment never completes
+  CONFIRMED
+  CANCELLED
+  EXPIRED // payment window lapsed; dates released
+}
+
+enum BookingSource {
+  WEBSITE
+  STAFF
+}
+
+model Booking {
+  id                  String                @id @default(uuid()) @db.Uuid
+  code                String                @unique
+  manageToken         String                @unique
+  idempotencyKey      String?               @unique
+  listingId           String                @db.Uuid
+  listing             Listing               @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  status              BookingStatus         @default(CONFIRMED)
+  source              BookingSource         @default(WEBSITE)
+  checkIn             DateTime              @db.Date
+  checkOut            DateTime              @db.Date
+  nights              Int
+  guests              Int
+  guestName           String
+  guestEmail          String
+  guestPhone          String                @default("")
+  message             String                @default("")
+  nightlyPrice        Int
+  cleaningFee         Int
+  totalPrice          Int
+  currency            String
+  cancelledAt         DateTime?
+  cancelledBy         String?
+  cancellationReason  String                @default("")
+  createdById         String?               @db.Uuid
+  createdBy           User?                 @relation("BookingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  termsVersionId      String?               @db.Uuid
+  termsVersion        LegalDocumentVersion? @relation("BookingTerms", fields: [termsVersionId], references: [id], onDelete: SetNull)
+  privacyVersionId    String?               @db.Uuid
+  privacyVersion      LegalDocumentVersion? @relation("BookingPrivacy", fields: [privacyVersionId], references: [id], onDelete: SetNull)
+  confirmedAt         DateTime?
+  reminderSentAt      DateTime?
+  reviewRequestSentAt DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  hold     CalendarHold?
+  review   Review?
+  payments Payment[]
+
+  @@index([listingId, checkIn])
+  @@index([status, checkIn])
+  @@index([guestEmail])
+}
+
+// ---------------------------------------------------------------------------
+// Reviews (one per completed booking)
+// ---------------------------------------------------------------------------
+
+model Review {
+  id            String   @id @default(uuid()) @db.Uuid
+  listingId     String   @db.Uuid
+  listing       Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  bookingId     String?  @unique @db.Uuid
+  booking       Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  authorName    String
+  rating        Int
+  cleanliness   Int?
+  accuracy      Int?
+  communication Int?
+  location      Int?
+  checkIn       Int?
+  value         Int?
+  comment       String
+  isHidden      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([listingId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Payments (provider-agnostic; Stripe today)
+// ---------------------------------------------------------------------------
+
+enum PaymentStatus {
+  PENDING // checkout created, waiting for the guest
+  SUCCEEDED
+  FAILED
+  CANCELED // checkout expired or abandoned
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  bookingId         String        @db.Uuid
+  booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  provider          String
+  providerSessionId String?       @unique
+  providerPaymentId String?
+  checkoutUrl       String?
+  status            PaymentStatus @default(PENDING)
+  amount            Int
+  currency          String
+  amountRefunded    Int           @default(0)
+  expiresAt         DateTime
+  paidAt            DateTime?
+  lastCheckedAt     DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  refunds Refund[]
+
+  @@index([bookingId])
+  @@index([status, expiresAt])
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+model Refund {
+  id               String       @id @default(uuid()) @db.Uuid
+  paymentId        String       @db.Uuid
+  payment          Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amount           Int
+  status           RefundStatus @default(PENDING)
+  providerRefundId String?      @unique
+  reason           String       @default("")
+  initiatedBy      String
+  failureMessage   String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([paymentId])
+}
+
+/// Provider webhooks are delivered at-least-once and may hit any replica; this makes processing idempotent.
+model WebhookEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  provider   String
+  eventId    String
+  type       String
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+}
+
+// ---------------------------------------------------------------------------
+// Email outbox (provider-agnostic; Brevo today)
+// ---------------------------------------------------------------------------
+
+enum EmailStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+}
+
+/// Emails are written here (often in the same transaction as the event that caused them) and
+/// delivered by a worker that claims rows with FOR UPDATE SKIP LOCKED, so any number of replicas
+/// can send without duplicates, and provider outages are retried with backoff.
+model EmailMessage {
+  id                String      @id @default(uuid()) @db.Uuid
+  template          String
+  toEmail           String
+  toName            String      @default("")
+  subject           String
+  html              String
+  text              String
+  status            EmailStatus @default(PENDING)
+  attempts          Int         @default(0)
+  nextAttemptAt     DateTime    @default(now())
+  lockedUntil       DateTime?
+  lastError         String?
+  provider          String?
+  providerMessageId String?
+  bookingId         String?     @db.Uuid
+  sentAt            DateTime?
+  createdAt         DateTime    @default(now())
+
+  @@index([status, nextAttemptAt])
+  @@index([createdAt])
+  @@index([bookingId])
+}
+
+// ---------------------------------------------------------------------------
+// Legal pages (versioned)
+// ---------------------------------------------------------------------------
+
+enum LegalDocumentType {
+  TERMS
+  PRIVACY
+}
+
+/// Append-only. A version is in force from its publishedAt until the next version's publishedAt.
+model LegalDocumentVersion {
+  id          String            @id @default(uuid()) @db.Uuid
+  type        LegalDocumentType
+  version     Int
+  title       String
+  content     String
+  changeNote  String            @default("")
+  publishedAt DateTime          @default(now())
+  createdById String?           @db.Uuid
+  createdBy   User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  termsBookings   Booking[] @relation("BookingTerms")
+  privacyBookings Booking[] @relation("BookingPrivacy")
+
+  @@unique([type, version])
+  @@index([type, publishedAt])
+}
